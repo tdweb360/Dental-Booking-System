@@ -90,19 +90,25 @@ def _validatePhoneNUM():
     return phone
 
 def searchPatient():
-    choice = int(input("Do you want to search by:\n"
-                       "1. Name\n"
-                       "2. Phone Number\n"
-                       "3. Date of Birth\n\n"
-                       ">>  "))
-    if choice == 1:
-        searchName()
-    elif choice == 2:
-        searchPhone()
-    elif choice == 3:
-        searchDOB()
-    else:
-        print("Error")
+    valid = False
+    while valid == False:
+        try:
+            choice = int(input("Do you want to search by:\n"
+                               "1. Name\n"
+                               "2. Phone Number\n"
+                               "3. Date of Birth\n"
+                               "4. Exit search\n\n"
+                               ">>  "))
+            if choice == 1:
+                searchName()
+            elif choice == 2:
+                searchPhone()
+            elif choice == 3:
+                searchDOB()
+            else:
+                print("Not a valid option")
+        except ValueError:
+            print("")
 
 def searchName():
     name = input("Enter name: ").strip().capitalize()
@@ -194,7 +200,8 @@ def patientmanagementwindow(chosenID):
             choice = int(input("Do you want to:\n\n"
                                "1. Edit this patient\n"
                                "2. Delete Patient\n"
-                               "3. Book an appointment\n\n"
+                               "3. Book an appointment\n"
+                               "4. Exit patient manager\n\n"
                                ">>  "))
             if choice == 1:
                 editPatientMenu(chosenID)
@@ -206,10 +213,10 @@ def patientmanagementwindow(chosenID):
             elif choice == 3:
                 appointments.bookAppointment(chosenID)
 
+            elif choice == 4:
+                valid = True
 
 
-            else:
-                print("Not present")
         except ValueError:
             print("Invalid Input")
 
@@ -228,16 +235,25 @@ def deletePatient(patientID):
 
 
 def editPatientMenu(patientID):
-    choice = int(input("Select which field you would like to edit\n"
-                       "1. Name\n"
-                       "2. Date of Birth\n"
-                       "3. Phone Number\n\n>>  "))
-    if choice == 1:
-        editName(patientID)
-    elif choice == 2:
-        editDOB(patientID)
-    elif choice == 3:
-        editPhone(patientID)
+    valid = False
+    while valid == False:
+        try:
+            choice = int(input("Select which field you would like to edit\n"
+                               "1. Name\n"
+                               "2. Date of Birth\n"
+                               "3. Phone Number\n"
+                               "4. Exit editing\n\n"
+                               ">>  "))
+            if choice == 1:
+                editName(patientID)
+            elif choice == 2:
+                editDOB(patientID)
+            elif choice == 3:
+                editPhone(patientID)
+            elif choice == 4:
+                valid = True
+        except ValueError:
+            print("Incorrect datatype")
 
 def editName(patientID):
     firstname, surname = _validateFNandSN()
