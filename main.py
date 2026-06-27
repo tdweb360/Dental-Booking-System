@@ -7,6 +7,8 @@ while not valid:
         patients.enterpatientdetails()
     elif choice == 2:
         patients.searchPatient()
+    elif choice == 3:
+        appointments.searchMenu()
     else:
         print("Error")
 

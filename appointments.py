@@ -1,6 +1,8 @@
 import sqlite3
 from datetime import datetime, timedelta
 
+import patients
+
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
@@ -110,3 +112,58 @@ def selectDuration():
 
         except ValueError:
             print("Invalid input")
+
+def searchMenu():
+    valid = False
+    while not valid:
+        try:
+            choice = int(input("1. Show all appointments\n"
+                               "2. Search appointment by date\n"
+                               "3. Search appointment by patient\n"
+                               "4. Exit\n\n"
+                               ">>  "))
+            if choice == 1:
+                viewAllAppointments()
+            elif choice == 2:
+                viewAppointmentsbyDate()
+            elif choice == 3:
+                viewAppointmentsbyPatient()
+            elif choice == 4:
+                valid = True
+            else:
+                print("Not a valid input")
+        except ValueError:
+            print("Must be a number")
+
+def viewAllAppointments():
+    cursor.execute("""
+    SELECT * FROM Appointments_Table""")
+    results = cursor.fetchall()
+    fetchAppointments(results)
+
+def fetchAppointments(results):
+    if len(results) == 0:
+        print("No appointments found")
+    else:
+        for p in results:
+            print(f"ID: {p[0]}"
+                  f" | Date: {p[1]}"
+                  f" | Time: {p[2]}"
+                  f" | PatientID: {p[3]}"
+                  f" | StaffID: {p[4]}"
+                  f" | Duration: {p[5]} mins")
+def viewAppointmentsbyDate():
+    date = validateAppointmentDate()
+    cursor.execute("""
+    SELECT * FROM Appointments_Table 
+    WHERE Appointment_date = ?""",(date,))
+    results = cursor.fetchall()
+    fetchAppointments(results)
+
+def viewAppointmentsbyPatient():
+    PatientID = patients.searchPatient()
+    cursor.execute("""
+    SELECT * FROM Appointments_Table
+    WHERE PatientID = ?""",(PatientID,))
+    results = cursor.fetchall()
+    fetchAppointments(results)
