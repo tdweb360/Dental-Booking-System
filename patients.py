@@ -12,10 +12,9 @@ def enterpatientdetails():
         firstname, surname = _validateFNandSN()
         date_of_birth = _validateDOB()
         phonenum = _validatePhoneNUM()
-        print("\nYou entered:")
-        print("Name:", firstname, surname)
-        print("DOB:", date_of_birth)
-        print("Phone:", phonenum)
+        print("\nYou entered:\nName:", firstname, surname,
+              "\nDOB:", date_of_birth,
+              "\nPhone:", phonenum)
         answer = input("Are these details correct?:  ").strip().lower()
 
         if answer in ["y","yes"]:
@@ -64,10 +63,9 @@ def _validateDOB():
                 date = datetime.strptime(date_of_birth, x)
                 if date > today:
                     print("Cannot be in future")
-
                 else:
                     valid = True
-                break
+                    break
 
             except ValueError:
                 continue
@@ -92,7 +90,11 @@ def _validatePhoneNUM():
     return phone
 
 def searchPatient():
-    choice = int(input("Do you want to search by:\n1. Name\n2. Phone Number\n3. Date of Birth\n\n>>  "))
+    choice = int(input("Do you want to search by:\n"
+                       "1. Name\n"
+                       "2. Phone Number\n"
+                       "3. Date of Birth\n\n"
+                       ">>  "))
     if choice == 1:
         searchName()
     elif choice == 2:
@@ -110,7 +112,7 @@ def searchName():
 
         cursor.execute("""
         SELECT * FROM Patients_Table
-        WHERE Firstname LIKE ? or Surname LIKE ?
+        WHERE FirstName LIKE ? or Surname LIKE ?
                        """, (searchPattern,searchPattern))
         results = cursor.fetchall()
         fetchQueryResults(results)
@@ -170,7 +172,7 @@ def fetchQueryResults(results):
                   f" | Phone: {p[4]}")
             valid_ids.append(p[0])
         chosenID = selectPatient(results,valid_ids)
-        editPatientMenu(chosenID)
+        patientmanagementwindow(chosenID)
 
 def selectPatient(results,valid_ids):
     valid = False
@@ -182,10 +184,44 @@ def selectPatient(results,valid_ids):
 
             else:
                 print("Not present")
-        except:
-            print("Error")
+        except ValueError:
+            print("Invalid Input")
 
-#def deletePatient():
+def patientmanagementwindow(chosenID):
+    valid = False
+    while not valid:
+        try:
+            choice = int(input("Do you want to:\n\n"
+                               "1. Edit this patient\n"
+                               "2. Delete Patient\n\n"
+                               ">>  "))
+            if choice == 1:
+                editPatientMenu(chosenID)
+                valid = True
+            elif choice == 2:
+                successful = deletePatient(chosenID)
+                if successful == True:
+                    valid = True
+
+
+            else:
+                print("Not present")
+        except ValueError:
+            print("Invalid Input")
+
+def deletePatient(patientID):
+    confirm = input("Are you sure?\n\n>>  ").strip().lower()
+    if confirm == "yes" or confirm == "y":
+        cursor.execute("""
+        DELETE FROM Patients_Table
+        WHERE PatientID = ?
+        """, (patientID,))
+        connect.commit()
+        return True
+    else:
+        return False
+
+
 
 def editPatientMenu(patientID):
     choice = int(input("Select which field you would like to edit\n"
@@ -206,6 +242,9 @@ def editName(patientID):
     SET FirstName = ?, Surname = ?
     WHERE PatientID = ?
     """, (firstname,surname,patientID))
+    connect.commit()
+    print("Patient updated successfully")
+
 
 def editDOB(patientID):
     dob = _validateDOB()
@@ -214,6 +253,9 @@ def editDOB(patientID):
     SET Date_of_birth = ?
     WHERE PatientID = ?
     """, (dob,patientID))
+    connect.commit()
+    print("Patient updated successfully")
+
 
 def editPhone(patientID):
     phone = _validatePhoneNUM()
@@ -222,3 +264,7 @@ def editPhone(patientID):
     SET Phone_Num = ?
     WHERE PatientID = ?
     """, (phone,patientID))
+    connect.commit()
+    print("Patient updated successfully")
+
+
