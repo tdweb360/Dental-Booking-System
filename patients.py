@@ -100,11 +100,13 @@ def searchPatient():
                                "4. Exit search\n\n"
                                ">>  "))
             if choice == 1:
-                searchName()
+                return searchName()
             elif choice == 2:
-                searchPhone()
+                return searchPhone()
             elif choice == 3:
-                searchDOB()
+                return searchDOB()
+            elif choice == 4:
+                return None
             else:
                 print("Not a valid option")
         except ValueError:
@@ -122,13 +124,11 @@ def searchName():
         WHERE FirstName LIKE ? or Surname LIKE ?
                        """, (searchPattern,searchPattern))
         results = cursor.fetchall()
-        fetchQueryResults(results)
-
-
-
-
+        return fetchQueryResults(results)
     else:
         print("Error")
+
+
 def searchPhone():
     phone = input("Enter phone number: ").strip()
     phone = phone.replace(" ", "")
@@ -145,7 +145,7 @@ def searchPhone():
             WHERE Phone_Num = ?
             """, (phone,))
     results = cursor.fetchall()
-    fetchQueryResults(results)
+    return fetchQueryResults(results)
 
 def searchDOB():
     choice = int(input("Do you want to:\n"
@@ -165,7 +165,7 @@ def searchDOB():
                 WHERE Date_of_birth LIKE ?
                 """, (searchPattern,))
             results = cursor.fetchall()
-            fetchQueryResults(results)
+            return fetchQueryResults(results)
 
 
 def fetchQueryResults(results):
@@ -180,7 +180,7 @@ def fetchQueryResults(results):
                   f" | Phone: {p[4]}")
             valid_ids.append(p[0])
         chosenID = selectPatient(results,valid_ids)
-        patientmanagementwindow(chosenID)
+        return chosenID
 
 def selectPatient(results,valid_ids):
     valid = False
