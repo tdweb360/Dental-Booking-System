@@ -28,7 +28,7 @@ def bookAppointment(patientID):
 
 def checkConflict(date, time, duration):
     cursor.execute("""
-    SELECT Appointment_time, duration
+    SELECT Appointment_time, Duration
     FROM Appointments_Table
     WHERE Appointment_date = ?
     """, (date,))
