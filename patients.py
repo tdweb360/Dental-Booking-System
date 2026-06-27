@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 import re
-
+import appointments
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -193,7 +193,8 @@ def patientmanagementwindow(chosenID):
         try:
             choice = int(input("Do you want to:\n\n"
                                "1. Edit this patient\n"
-                               "2. Delete Patient\n\n"
+                               "2. Delete Patient\n"
+                               "3. Book an appointment\n\n"
                                ">>  "))
             if choice == 1:
                 editPatientMenu(chosenID)
@@ -202,6 +203,9 @@ def patientmanagementwindow(chosenID):
                 successful = deletePatient(chosenID)
                 if successful == True:
                     valid = True
+            elif choice == 3:
+                appointments.bookAppointment(chosenID)
+
 
 
             else:
