@@ -135,11 +135,7 @@ def searchMenu():
         except ValueError:
             print("Must be a number")
 
-def viewAllAppointments():
-    cursor.execute("""
-    SELECT * FROM Appointments_Table""")
-    results = cursor.fetchall()
-    fetchAppointments(results)
+
 
 def fetchAppointments(results):
     if len(results) == 0:
@@ -152,6 +148,17 @@ def fetchAppointments(results):
                   f" | PatientID: {p[3]}"
                   f" | StaffID: {p[4]}"
                   f" | Duration: {p[5]} mins")
+    choice = input("Do you want to cancel an appointment?").strip().lower()
+    if choice in ["yes","y"]:
+        cancelAppointment(results)
+
+
+def viewAllAppointments():
+    cursor.execute("""
+    SELECT * FROM Appointments_Table""")
+    results = cursor.fetchall()
+    fetchAppointments(results)
+
 def viewAppointmentsbyDate():
     date = validateAppointmentDate()
     cursor.execute("""
@@ -167,3 +174,34 @@ def viewAppointmentsbyPatient():
     WHERE PatientID = ?""",(PatientID,))
     results = cursor.fetchall()
     fetchAppointments(results)
+
+
+def cancelAppointment(results):
+    valid = False
+    while not valid:
+        try:
+            enteredID = int(input("Enter appointment ID"))
+            valid_ids = []
+            if len(results) == 0:
+                print("No appointments found")
+            else:
+                for a in results:
+                    valid_ids.append(a[0])
+                if enteredID in valid_ids:
+                    confirm = input("Are you sure?").strip().lower()
+                    if confirm in ["yes","y"]:
+                        cursor.execute("""
+                        DELETE FROM Appointments_Table
+                        WHERE AppointmentID = ?
+                        """,(enteredID,))
+                        print("Deleted successfully")
+                        valid = True
+                    elif confirm in ["no","n"]:
+                        print("Cancelled")
+                        break
+
+
+                else:
+                    print("Invalid ID")
+        except ValueError:
+            print("Invalid Input")
