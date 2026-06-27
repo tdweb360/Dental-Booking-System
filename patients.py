@@ -116,6 +116,7 @@ def searchName():
         fetchQueryResults(results)
 
 
+
     else:
         print("Error")
 def searchPhone():
@@ -156,7 +157,9 @@ def searchDOB():
             results = cursor.fetchall()
             fetchQueryResults(results)
 
+
 def fetchQueryResults(results):
+    valid_ids = []
     if len(results) == 0:
         print("No patients found")
     else:
@@ -165,7 +168,57 @@ def fetchQueryResults(results):
                   f" | Name: {p[1]} {p[2]}"
                   f" | DOB: {p[3]}"
                   f" | Phone: {p[4]}")
+            valid_ids.append(p[0])
+        chosenID = selectPatient(results,valid_ids)
+        editPatientMenu(chosenID)
 
+def selectPatient(results,valid_ids):
+    valid = False
+    while not valid:
+        try:
+            chosenID = int(input("Enter ID of chosen patient:  "))
+            if chosenID in valid_ids:
+                return chosenID
 
+            else:
+                print("Not present")
+        except:
+            print("Error")
 
-            ## FUZZY STRING MATCHING
+#def deletePatient():
+
+def editPatientMenu(patientID):
+    choice = int(input("Select which field you would like to edit\n"
+                       "1. Name\n"
+                       "2. Date of Birth\n"
+                       "3. Phone Number\n\n>>  "))
+    if choice == 1:
+        editName(patientID)
+    elif choice == 2:
+        editDOB(patientID)
+    elif choice == 3:
+        editPhone(patientID)
+
+def editName(patientID):
+    firstname, surname = _validateFNandSN()
+    cursor.execute("""
+    UPDATE Patients_Table
+    SET FirstName = ?, Surname = ?
+    WHERE PatientID = ?
+    """, (firstname,surname,patientID))
+
+def editDOB(patientID):
+    dob = _validateDOB()
+    cursor.execute("""
+    UPDATE Patients_Table
+    SET Date_of_birth = ?
+    WHERE PatientID = ?
+    """, (dob,patientID))
+
+def editPhone(patientID):
+    phone = _validatePhoneNUM()
+    cursor.execute("""
+    UPDATE Patients_Table
+    SET Phone_Num = ?
+    WHERE PatientID = ?
+    """, (phone,patientID))
