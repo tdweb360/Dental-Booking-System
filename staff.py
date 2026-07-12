@@ -1,6 +1,7 @@
 import patients
 import sqlite3
 import re
+import bcrypt
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 def addStaff():
@@ -30,7 +31,7 @@ def addStaff():
     try:
         cursor.execute("""
         INSERT INTO Staff_Table (FirstName, Surname, Username, Password_Hash, Staff_Role) 
-        VALUES (?,?,?,?)
+        VALUES (?,?,?,?,?)
             """, (firstname, surname, username, hashed_pass, role,))
 
         connect.commit()
@@ -40,13 +41,55 @@ def addStaff():
 def createUsername():
     valid = False
     pattern = r"^[A-Za-z0-9._]+$"
-    while valid == False:
-        username = input("Enter username: ")
+    while not valid:
+        username = input("Enter username (Special characters: . _ ): ")
         if not(4 <= len(username) <= 20):
             print("Wrong length")
-        if
+        elif not(re.match(pattern,username)):
+            print("These special characters are not allowed")
+        else:
+            return username
+
 def createPass():
-    #
+    valid = False
+    while not valid:
+        password = input("Enter password: ")
+        if len(password) < 8:
+            print("Password must be at least 8 characters")
+        elif not re.search(r"[A-Z]", password):
+            print("Password must contain an uppercase letter")
+        elif not re.search(r"[a-z]", password):
+            print("Password must contain a lowercase letter")
+        elif not re.search(r"\d", password):
+            print("Password must contain a number")
+        elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            print("Password must contain a special character")
+        else:
+            confirmPassword = input("Confirm password: ")
+            if password != confirmPassword:
+                print("Passwords do not match")
+            else:
+                valid = True
+    return password
+
+
 def roleselect():
-    #
+    valid = False
+    while not valid:
+        try:
+            role = int(input("Enter role:"
+                             "\n\n1. Dentist"
+                             "\n\n2. Receptionist"
+                             "\n\n3. Manager"))
+            if role == 1:
+                return "Dentist"
+            elif role == 2:
+                return "Receptionist"
+            elif role == 3:
+                return "Manager"
+            else:
+                print("Not a valid choice")
+        except ValueError:
+            print("Input must be a number")
+
 def hashpass(passowrd):
