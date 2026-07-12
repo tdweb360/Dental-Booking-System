@@ -111,7 +111,7 @@ def searchPatient():
                 print("Not a valid option")
         except ValueError:
             print("")
-    return chosenID
+
 
 def searchName():
     name = input("Enter name: ").strip().capitalize()

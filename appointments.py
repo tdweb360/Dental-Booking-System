@@ -194,6 +194,7 @@ def cancelAppointment(results):
                         DELETE FROM Appointments_Table
                         WHERE AppointmentID = ?
                         """,(enteredID,))
+                        connect.commit()
                         print("Deleted successfully")
                         valid = True
                     elif confirm in ["no","n"]:
