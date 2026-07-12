@@ -86,10 +86,18 @@ def roleselect():
             elif role == 2:
                 return "Receptionist"
             elif role == 3:
-                return "Manager"
+                if checkManager() == True:
+                    return "Manager"
+                else:
+                    print("Failed")
             else:
                 print("Not a valid choice")
         except ValueError:
             print("Input must be a number")
+def checkManager():
 
-def hashpass(passowrd):
+def hashpass(password):
+    salt = bcrypt.gensalt()
+    hashedPassword = bcrypt.hashpw(password.encode(), salt)
+    return hashedPassword.decode()
+def
