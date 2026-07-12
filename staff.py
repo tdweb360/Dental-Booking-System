@@ -47,8 +47,15 @@ def createUsername():
             print("Wrong length")
         elif not(re.match(pattern,username)):
             print("These special characters are not allowed")
+        cursor.execute("""SELECT Username 
+        FROM Staff_Table 
+        WHERE Username = ? """, (username,))
+        result = cursor.fetchone()
+        if result:
+            print("User already exists")
         else:
-            return username
+            valid = True
+    return username
 
 def createPass():
     valid = False
@@ -86,7 +93,7 @@ def roleselect():
             elif role == 2:
                 return "Receptionist"
             elif role == 3:
-                if checkManager() == True:
+                if checkManager():
                     return "Manager"
                 else:
                     print("Failed")
@@ -95,9 +102,9 @@ def roleselect():
         except ValueError:
             print("Input must be a number")
 def checkManager():
+    return True
 
 def hashpass(password):
     salt = bcrypt.gensalt()
     hashedPassword = bcrypt.hashpw(password.encode(), salt)
     return hashedPassword.decode()
-def
