@@ -31,11 +31,15 @@ CREATE TABLE IF NOT EXISTS Appointments_Table (
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS Staff_Table(
     StaffID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Username TEXT,
+    FirstName TEXT,
+    Surname TEXT,
+    Username TEXT UNIQUE,
     Password_Hash TEXT,
     Staff_Role TEXT
 )
-               """)
+""")
 
+
+connect.commit()
 connect.commit()
 connect.close()
