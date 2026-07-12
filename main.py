@@ -20,3 +20,8 @@ while not valid:
     except ValueError:
         print("Incorrect datatype")
 
+def dentist_menu():
+
+def receptionist_menu()
+
+def manager_menu()
