@@ -188,7 +188,7 @@ def staffManagementMenu():
 
 def editName(staffID):
     firstname,surname = patients._validateFNandSN()
-    confirm = input("Are you sure?").lower
+    confirm = input("Are you sure?").strip().lower()
     if confirm in ["yes", "y"]:
         try:
             cursor.execute("""UPDATE Staff_Table
@@ -201,12 +201,13 @@ def editName(staffID):
 
 def resetUsername(staffID):
     username = createUsername()
-    confirm = input("Are you sure?").lower
+    confirm = input("Are you sure?").strip().lower()
     if confirm in ["yes", "y"]:
         try:
             cursor.execute("""UPDATE Staff_Table
                 SET Username = ?
                 WHERE StaffID = ?""", (username,staffID))
+            connect.commit()
             print("Username changed")
         except:
             print("Database error")
@@ -231,6 +232,44 @@ def resetPassword(staffID):
 
         except:
             print("Database error")
+
+def changeRole(staffID):
+    role = roleselect()
+
+    confirm = input("Are you sure? ").strip().lower()
+
+    if confirm in ["yes", "y"]:
+        try:
+            cursor.execute("""
+            UPDATE Staff_Table
+            SET Staff_Role = ?
+            WHERE StaffID = ?
+            """, (role, staffID))
+
+            connect.commit()
+
+            print("Role changed")
+
+        except:
+            print("Database error")
+
+def deleteStaff(staffID):
+    confirm = input("Are you sure? ").strip().lower()
+    if confirm in ["yes", "y"]:
+        try:
+            cursor.execute("""
+            DELETE FROM Staff_Table
+            WHERE StaffID = ?
+            """, (staffID,))
+
+            connect.commit()
+
+            print("Staff member deleted")
+
+            return True
+        except:
+            print("Database error")
+    return False
 
 def searchStaff():
     valid = False
