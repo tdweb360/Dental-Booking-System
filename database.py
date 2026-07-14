@@ -2,6 +2,7 @@ import sqlite3
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
+cursor.execute("PRAGMA foreign_keys = ON")
 
 ## patients table ##
 cursor.execute("""
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS Appointments_Table (
     Appointment_time TEXT,
     PatientID INTEGER,
     StaffID INTEGER,
+    Duration INTEGER,
     FOREIGN KEY (PatientID) REFERENCES Patients_Table(PatientID),
     FOREIGN KEY (StaffID) REFERENCES Staff_Table(StaffID)
 )
@@ -39,6 +41,8 @@ CREATE TABLE IF NOT EXISTS Staff_Table(
 )
 """)
 
+cursor.execute("PRAGMA table_info(Appointments_Table)")
+print(cursor.fetchall())
 
 connect.commit()
 connect.commit()

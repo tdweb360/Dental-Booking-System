@@ -2,19 +2,19 @@ import sqlite3
 from datetime import datetime, timedelta
 
 import patients
-
+import staff
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
 
 def bookAppointment(patientID):
+    staffID = staff.searchStaff()
     date = validateAppointmentDate()
     time = validateAppointmentTime()
     duration = selectDuration()
-    staffID = 1
 
     # check for conflicts
-    conflict = checkConflict(date, time, duration)
+    conflict = checkConflict(date, time, duration,staffID)
     if conflict == True:
         print("Time slot already booked")
     else:
@@ -28,12 +28,13 @@ def bookAppointment(patientID):
         print("Appointment booked")
 
 
-def checkConflict(date, time, duration):
+def checkConflict(date, time, duration,staffID):
     cursor.execute("""
     SELECT Appointment_time, Duration
     FROM Appointments_Table
     WHERE Appointment_date = ?
-    """, (date,))
+    AND StaffID = ?
+    """, (date, staffID))
 
     existing = cursor.fetchall()
     bookingStart = datetime.strptime(time, "%H:%M")
