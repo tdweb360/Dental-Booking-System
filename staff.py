@@ -326,16 +326,23 @@ def searchStaffName():
     name = input("Enter name: ").strip().capitalize()
     searchPattern = "%" + name + "%"
     pattern = r"^[A-Za-z'-]+$"
-    if len(name) > 2 and re.match(pattern, name):
+    valid = False
+    while not valid:
 
-        cursor.execute("""
-        SELECT * FROM Staff_Table
-        WHERE FirstName LIKE ? or Surname LIKE ?
-                       """, (searchPattern, searchPattern))
-        results = cursor.fetchall()
-        return fetchStaffQueryResults(results)
-    else:
-        print("Error")
+        if len(name) > 2 and re.match(pattern, name):
+
+            cursor.execute("""
+            SELECT * FROM Staff_Table
+            WHERE FirstName LIKE ? or Surname LIKE ?
+                           """, (searchPattern, searchPattern))
+            results = cursor.fetchall()
+            if len(results) > 0:
+                valid = True
+            else:
+                print("Error")
+        else:
+            print("Error")
+    return fetchStaffQueryResults(results)
 
 def fetchStaffQueryResults(results):
     valid_ids = []

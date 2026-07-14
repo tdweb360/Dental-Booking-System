@@ -9,15 +9,17 @@ cursor = connect.cursor()
 
 def bookAppointment(patientID):
     staffID = staff.searchStaff()
+    if staffID is None:
+        print("No staff member selected")
+        return
     date = validateAppointmentDate()
     time = validateAppointmentTime()
     duration = selectDuration()
 
-    # check for conflicts
-    conflict = checkConflict(date, time, duration,staffID)
-    if conflict == True:
-        print("Time slot already booked")
-    else:
+
+    excludeAppointmentID = None
+    conflict = checkConflict(date, time, duration,staffID,patientID, excludeAppointmentID)
+    if conflict != True:
         cursor.execute("""
         INSERT INTO Appointments_Table
         (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
@@ -28,22 +30,67 @@ def bookAppointment(patientID):
         print("Appointment booked")
 
 
-def checkConflict(date, time, duration,staffID):
-    cursor.execute("""
-    SELECT Appointment_time, Duration
-    FROM Appointments_Table
-    WHERE Appointment_date = ?
-    AND StaffID = ?
-    """, (date, staffID))
+def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID=None):
 
-    existing = cursor.fetchall()
     bookingStart = datetime.strptime(time, "%H:%M")
-    bookingEnd = datetime.strptime(time, "%H:%M") + timedelta(minutes=duration)
-    for each in existing:
+    bookingEnd = bookingStart + timedelta(minutes=duration)
+
+    # Staff
+
+    if excludeAppointmentID is None:
+        cursor.execute("""
+        SELECT Appointment_time, Duration
+        FROM Appointments_Table
+        WHERE Appointment_date = ?
+        AND StaffID = ?
+        """, (date, staffID))
+
+    else:
+        cursor.execute("""
+        SELECT Appointment_time, Duration
+        FROM Appointments_Table
+        WHERE Appointment_date = ?
+        AND StaffID = ?
+        AND AppointmentID != ?
+        """, (date, staffID, excludeAppointmentID))
+
+    staffAppointments = cursor.fetchall()
+
+    for each in staffAppointments:
+
         existingStart = datetime.strptime(each[0], "%H:%M")
-        existingEnd = datetime.strptime(each[0], "%H:%M") + timedelta(minutes=each[1])
+        existingEnd = existingStart + timedelta(minutes=each[1])
+
         if bookingStart < existingEnd and bookingEnd > existingStart:
-            print("Appointments Conflict")
+            print("Staff member already booked")
+            return True
+
+    # Patient
+
+    if excludeAppointmentID is None:
+        cursor.execute("""
+        SELECT Appointment_time, Duration
+        FROM Appointments_Table
+        WHERE Appointment_date = ?
+        AND PatientID = ?
+        """, (date, patientID))
+
+    else:
+        cursor.execute("""
+        SELECT Appointment_time, Duration
+        FROM Appointments_Table
+        WHERE Appointment_date = ?
+        AND PatientID = ?
+        AND AppointmentID != ?
+        """, (date, patientID, excludeAppointmentID))
+
+    patientAppointments = cursor.fetchall()
+    for each in patientAppointments:
+        existingStart = datetime.strptime(each[0], "%H:%M")
+        existingEnd = existingStart + timedelta(minutes=each[1])
+
+        if bookingStart < existingEnd and bookingEnd > existingStart:
+            print("Patient already has an appointment at this time")
             return True
     return False
 
@@ -114,6 +161,94 @@ def selectDuration():
         except ValueError:
             print("Invalid input")
 
+def appointmentsmenu(results):
+    valid = False
+    while not valid:
+        try:
+            choice = int(input(
+                "\n1. Cancel Appointment"
+                "\n2. Edit Appointment"
+                "\n3. Exit\n\n"
+                ">> "
+            ))
+
+            if choice == 1:
+                cancelAppointment(results)
+                valid = True
+            elif choice == 2:
+                editAppointmentMenu(results)
+                valid = True
+            elif choice == 3:
+                valid = True
+            else:
+                print("Not a valid option")
+        except ValueError:
+            print("Invalid Input")
+
+def editAppointmentMenu(results):
+    valid_ids = []
+
+    for a in results:
+        valid_ids.append(a[0])
+
+    valid = False
+
+    while not valid:
+        try:
+            appointmentID = int(input(
+                "Enter Appointment ID: "
+            ))
+
+            if appointmentID in valid_ids:
+                editAppointment(appointmentID)
+                valid = True
+
+            else:
+                print("Invalid ID")
+
+        except ValueError:
+            print("Invalid Input")
+
+def editAppointment(appointmentID):
+
+    cursor.execute("""
+    SELECT PatientID
+    FROM Appointments_Table
+    WHERE AppointmentID = ?
+    """, (appointmentID,))
+    patientID = cursor.fetchone()[0]
+    staffID = staff.searchStaff()
+    date = validateAppointmentDate()
+    time = validateAppointmentTime()
+    duration = selectDuration()
+    conflict = checkConflict(
+        date,
+        time,
+        duration,
+        staffID,
+        patientID,
+        appointmentID
+    )
+    if conflict:
+        print("Time slot already booked")
+
+    else:
+        confirm = input("Are you sure? ").strip().lower()
+        if confirm in ["yes", "y"]:
+            try:
+                cursor.execute("""
+                UPDATE Appointments_Table
+                SET Appointment_date = ?,
+                    Appointment_time = ?,
+                    Duration = ?,
+                    StaffID = ?
+                WHERE AppointmentID = ?
+                """, (date, time, duration, staffID, appointmentID))
+                connect.commit()
+                print("Appointment updated")
+            except:
+                print("Database error")
+
 def searchMenu():
     valid = False
     while not valid:
@@ -141,17 +276,16 @@ def searchMenu():
 def fetchAppointments(results):
     if len(results) == 0:
         print("No appointments found")
-    else:
-        for p in results:
-            print(f"ID: {p[0]}"
-                  f" | Date: {p[1]}"
-                  f" | Time: {p[2]}"
-                  f" | PatientID: {p[3]}"
-                  f" | StaffID: {p[4]}"
-                  f" | Duration: {p[5]} mins")
-    choice = input("Do you want to cancel an appointment?").strip().lower()
-    if choice in ["yes","y"]:
-        cancelAppointment(results)
+        return
+
+    for p in results:
+        print(f"ID: {p[0]}"
+              f" | Date: {p[1]}"
+              f" | Time: {p[2]}"
+              f" | PatientID: {p[3]}"
+              f" | StaffID: {p[4]}"
+              f" | Duration: {p[5]} mins")
+    appointmentsmenu(results)
 
 
 def viewAllAppointments():
@@ -207,3 +341,7 @@ def cancelAppointment(results):
                     print("Invalid ID")
         except ValueError:
             print("Invalid Input")
+
+
+
+

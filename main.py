@@ -24,7 +24,7 @@ def staff_menu():
         try:
             choice = int(input(
                 "1. Add Patient\n"
-                "2. Search Patient\n"
+                "2. Search Patient/book appointment\n"
                 "3. Manage Appointments\n"
                 "4. Logout\n\n>>  "))
 

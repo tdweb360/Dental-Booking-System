@@ -80,6 +80,19 @@ cursor = connect.cursor()
 #
 # print("✅ Appointments table populated")
 
-cursor.execute("DELETE FROM Staff_Table")
-cursor.execute("DELETE FROM sqlite_sequence WHERE name='Staff_Table'")
+# cursor.execute("DELETE FROM Staff_Table")
+# cursor.execute("DELETE FROM sqlite_sequence WHERE name='Staff_Table'")
+# connect.commit()
+
+cursor.execute("""
+DELETE FROM Appointments_Table
+""")
+
+cursor.execute("""
+DELETE FROM sqlite_sequence
+WHERE name = 'Appointments_Table'
+""")
+
 connect.commit()
+
+print("Appointments deleted and IDs reset")
