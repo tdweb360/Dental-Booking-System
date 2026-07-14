@@ -9,7 +9,10 @@ cursor = connect.cursor()
 
 def main():
     staff.createInitialManager()
-    staffID, role = authentication.login()
+    result = authentication.login()
+    if result is None:
+        return
+    staffID, role = result
     if role == "Manager":
         manager_menu()
     else:
@@ -53,8 +56,9 @@ def manager_menu():
                 "1. Add Patient\n"
                 "2. Search Patient\n"
                 "3. Manage Appointments\n"
-                "4. Manage Staff\n"
-                "5. Logout\n\n>>  "))
+                "4. Add Staff\n"
+                "5. Manage Staff\n"
+                "6. Logout\n\n>>  "))
 
             if choice == 1:
                 patients.enterpatientdetails()
@@ -68,9 +72,12 @@ def manager_menu():
                 appointments.searchMenu()
 
             elif choice == 4:
-                staff.staffManagementMenu()
+                staff.addStaff()
 
             elif choice == 5:
+                staff.staffManagementMenu()
+
+            elif choice == 6:
                 valid = True
 
             else:

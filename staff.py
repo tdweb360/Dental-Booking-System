@@ -18,7 +18,6 @@ def addStaff():
         role = roleselect()
         print("\nYou entered:\nName:", firstname, surname,
               "\nUsername:", username,
-              "\nPassword:", password,
               "\nRole:", role)
         answer = input("Are these details correct?:  ").strip().lower()
 
@@ -50,14 +49,18 @@ def createUsername():
         elif not(re.match(pattern,username)):
             print("These special characters are not allowed")
         else:
-            cursor.execute("""SELECT Username 
-            FROM Staff_Table 
-            WHERE Username = ? """, (username,))
+            cursor.execute("""
+                SELECT Username
+                FROM Staff_Table
+                WHERE Username = ?
+                """, (username,))
+
             result = cursor.fetchone()
-        if result:
-            print("User already exists")
-        else:
-            valid = True
+
+            if result:
+                print("User already exists")
+            else:
+                valid = True
     return username
 
 def createPass():
@@ -280,9 +283,9 @@ def searchStaff():
                                "\n2. Name"
                                "\n\n>> "))
             if choice == 1:
-                searchStaffRole()
+                return searchStaffRole()
             elif choice == 2:
-                searchStaffName()
+                return searchStaffName()
             else:
                 print("Not a valid option")
         except ValueError:
