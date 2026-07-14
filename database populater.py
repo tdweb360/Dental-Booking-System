@@ -1,4 +1,4 @@
-# import sqlite3
+import sqlite3
 # from datetime import datetime
 # import random
 #
@@ -32,50 +32,54 @@
 # connect.close()
 #
 # print("✅ Database populated with test patients")
-import sqlite3
-import random
-
+# import sqlite3
+# import random
+#
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
+#
+# # sample times (15-minute intervals)
+# times = [
+#     "09:00", "09:15", "09:30", "09:45",
+#     "10:00", "10:15", "10:30", "10:45",
+#     "11:00", "11:15", "11:30", "11:45",
+#     "13:00", "13:15", "13:30", "13:45",
+#     "14:00", "14:15", "14:30", "14:45",
+#     "15:00", "15:15", "15:30", "15:45",
+#     "16:00", "16:15", "16:30"
+# ]
+#
+# durations = [15, 30, 45, 60]
+#
+# # example dates
+# dates = [
+#     "2026-09-18",
+#     "2026-09-19",
+#     "2026-09-20"
+# ]
+#
+# for i in range(20):  # creates 20 appointments
+#     date = random.choice(dates)
+#     time = random.choice(times)
+#     duration = random.choice(durations)
+#
+#     patientID = random.randint(1, 10)  # assumes you have patients
+#     staffID = 1
+#
+#     try:
+#         cursor.execute("""
+#         INSERT INTO Appointments_Table
+#         (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
+#         VALUES (?,?,?,?,?)
+#         """, (date, time, patientID, staffID, duration))
+#     except:
+#         pass  # ignore duplicates/conflicts in filler
+#
+# connect.commit()
+# connect.close()
+#
+# print("✅ Appointments table populated")
 
-# sample times (15-minute intervals)
-times = [
-    "09:00", "09:15", "09:30", "09:45",
-    "10:00", "10:15", "10:30", "10:45",
-    "11:00", "11:15", "11:30", "11:45",
-    "13:00", "13:15", "13:30", "13:45",
-    "14:00", "14:15", "14:30", "14:45",
-    "15:00", "15:15", "15:30", "15:45",
-    "16:00", "16:15", "16:30"
-]
-
-durations = [15, 30, 45, 60]
-
-# example dates
-dates = [
-    "2026-09-18",
-    "2026-09-19",
-    "2026-09-20"
-]
-
-for i in range(20):  # creates 20 appointments
-    date = random.choice(dates)
-    time = random.choice(times)
-    duration = random.choice(durations)
-
-    patientID = random.randint(1, 10)  # assumes you have patients
-    staffID = 1
-
-    try:
-        cursor.execute("""
-        INSERT INTO Appointments_Table
-        (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
-        VALUES (?,?,?,?,?)
-        """, (date, time, patientID, staffID, duration))
-    except:
-        pass  # ignore duplicates/conflicts in filler
-
+cursor.execute("DELETE FROM Staff_Table")
+cursor.execute("DELETE FROM sqlite_sequence WHERE name='Staff_Table'")
 connect.commit()
-connect.close()
-
-print("✅ Appointments table populated")
