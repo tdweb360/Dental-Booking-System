@@ -49,10 +49,11 @@ def createUsername():
             print("Wrong length")
         elif not(re.match(pattern,username)):
             print("These special characters are not allowed")
-        cursor.execute("""SELECT Username 
-        FROM Staff_Table 
-        WHERE Username = ? """, (username,))
-        result = cursor.fetchone()
+        else:
+            cursor.execute("""SELECT Username 
+            FROM Staff_Table 
+            WHERE Username = ? """, (username,))
+            result = cursor.fetchone()
         if result:
             print("User already exists")
         else:
@@ -146,3 +147,97 @@ def hashpass(password):
     salt = bcrypt.gensalt()
     hashedPassword = bcrypt.hashpw(password.encode(), salt)
     return hashedPassword.decode()
+
+def staffManagementMenu():
+    chosenID = searchStaff()
+    choice = int(input("Do you want to:"
+                       "1. "))
+def searchStaff():
+    valid = False
+    while not valid:
+        try:
+            choice = int(input("Do you want to search by:"
+                               "\n\n1. Staff Role"
+                               "\n2. Name"
+                               "\n\n>> "))
+            if choice == 1:
+                searchStaffRole()
+            elif choice == 2:
+                searchStaffName()
+            else:
+                print("Not a valid option")
+        except ValueError:
+            print("Must be an integer")
+
+def searchStaffRole():
+    valid = False
+
+    while not valid:
+        try:
+            choice = int(input(
+                "Select role:\n\n"
+                "1. Dentist\n"
+                "2. Receptionist\n"
+                "3. Manager\n\n"
+                ">> "
+            ))
+            if choice == 1:
+                role = "Dentist"
+            elif choice == 2:
+                role = "Receptionist"
+            elif choice == 3:
+                role = "Manager"
+            else:
+                print("Not a valid choice")
+                continue
+            cursor.execute("""
+            SELECT *
+            FROM Staff_Table
+            WHERE Staff_Role = ?
+            """, (role,))
+            results = cursor.fetchall()
+            return fetchStaffQueryResults(results)
+        except ValueError:
+            print("Input must be a number")
+
+def searchStaffName():
+    name = input("Enter name: ").strip().capitalize()
+    searchPattern = "%" + name + "%"
+    pattern = r"^[A-Za-z'-]+$"
+    if len(name) > 2 and re.match(pattern, name):
+
+        cursor.execute("""
+        SELECT * FROM Staff_Table
+        WHERE FirstName LIKE ? or Surname LIKE ?
+                       """, (searchPattern, searchPattern))
+        results = cursor.fetchall()
+        return fetchStaffQueryResults(results)
+    else:
+        print("Error")
+
+def fetchStaffQueryResults(results):
+    valid_ids = []
+    if len(results) == 0:
+        print("No staff members found")
+    else:
+        for p in results:
+            print(f"ID: {p[0]}"
+                  f" | Name: {p[1]} {p[2]}"
+                  f" | Username: {p[3]}"
+                  f" | Role: {p[5]}")
+            valid_ids.append(p[0])
+        chosenID = selectStaff(valid_ids)
+        return chosenID
+
+def selectStaff(valid_ids):
+    valid = False
+    while not valid:
+        try:
+            chosenID = int(input("Enter ID of chosen staff member:  "))
+            if chosenID in valid_ids:
+                return chosenID
+
+            else:
+                print("Not present")
+        except ValueError:
+            print("Invalid Input")
