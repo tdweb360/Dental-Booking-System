@@ -150,8 +150,88 @@ def hashpass(password):
 
 def staffManagementMenu():
     chosenID = searchStaff()
-    choice = int(input("Do you want to:"
-                       "1. "))
+
+    if chosenID is None:
+        return
+
+    valid = False
+
+    while not valid:
+        try:
+            choice = int(input(
+                "Do you want to:\n\n"
+                "1. Edit Name\n"
+                "2. Edit Username\n"
+                "3. Reset Password\n"
+                "4. Change Role\n"
+                "5. Delete Staff Member\n"
+                "6. Exit\n\n"
+                ">> "))
+            if choice == 1:
+                editName(chosenID)
+            elif choice == 2:
+                resetUsername(chosenID)
+            elif choice == 3:
+                resetPassword(chosenID)
+            elif choice == 4:
+                changeRole(chosenID)
+            elif choice == 5:
+                successful = deleteStaff(chosenID)
+                if successful:
+                    valid = True
+            elif choice == 6:
+                valid = True
+            else:
+                print("Not a valid option")
+        except ValueError:
+            print("Invalid Input")
+
+def editName(staffID):
+    firstname,surname = patients._validateFNandSN()
+    confirm = input("Are you sure?").lower
+    if confirm in ["yes", "y"]:
+        try:
+            cursor.execute("""UPDATE Staff_Table
+                SET FirstName = ?, Surname = ?
+                WHERE StaffID = ?""", (firstname,surname, staffID))
+            connect.commit()
+            print("Name changed")
+        except:
+            print("Database error")
+
+def resetUsername(staffID):
+    username = createUsername()
+    confirm = input("Are you sure?").lower
+    if confirm in ["yes", "y"]:
+        try:
+            cursor.execute("""UPDATE Staff_Table
+                SET Username = ?
+                WHERE StaffID = ?""", (username,staffID))
+            print("Username changed")
+        except:
+            print("Database error")
+
+def resetPassword(staffID):
+    password = createPass()
+    hashedPassword = hashpass(password)
+
+    confirm = input("Are you sure? ").strip().lower()
+
+    if confirm in ["yes", "y"]:
+        try:
+            cursor.execute("""
+            UPDATE Staff_Table
+            SET Password_Hash = ?
+            WHERE StaffID = ?
+            """, (hashedPassword, staffID))
+
+            connect.commit()
+
+            print("Password changed")
+
+        except:
+            print("Database error")
+
 def searchStaff():
     valid = False
     while not valid:
