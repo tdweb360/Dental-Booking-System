@@ -4,6 +4,8 @@ import re
 import bcrypt
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
+
+
 def addStaff():
 
     confirm = False
@@ -103,6 +105,42 @@ def roleselect():
             print("Input must be a number")
 def checkManager():
     return True
+
+def createInitialManager():
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM Staff_Table
+    WHERE Staff_Role = 'Manager'
+    """)
+
+    result = cursor.fetchone()
+
+    if result[0] == 0:
+        print("No manager account found.")
+        print("Create an initial manager account.\n")
+
+        firstname, surname = patients._validateFNandSN()
+        username = createUsername()
+        password = createPass()
+
+        hashedPassword = hashpass(password)
+
+        cursor.execute("""
+        INSERT INTO Staff_Table
+        (FirstName, Surname, Username, Password_Hash, Staff_Role)
+        VALUES (?,?,?,?,?)
+        """, (
+            firstname,
+            surname,
+            username,
+            hashedPassword,
+            "Manager"
+        ))
+
+        connect.commit()
+
+        print("Manager account created successfully")
+
 
 def hashpass(password):
     salt = bcrypt.gensalt()
