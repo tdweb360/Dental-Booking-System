@@ -16,6 +16,7 @@ def main():
     if result is None:
         return
     staffID, role, username = result
+    Recalls.generateRecalls()
     if role == "Manager":
         manager_menu(username)
     else:
@@ -44,7 +45,7 @@ def staff_menu(username):
                 appointments.searchMenu(username)
 
             elif choice == 4:
-                Recalls.viewOverdueRecalls()
+                Recalls.viewRecalls()
 
             elif choice == 5:
                 valid = True
@@ -87,7 +88,7 @@ def manager_menu(username):
                 staff.staffManagementMenu(username)
 
             elif choice == 6:
-                Recalls.viewOverdueRecalls()
+                Recalls.viewRecalls()
 
             elif choice == 7:
                 Logging.viewAuditLog()

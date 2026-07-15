@@ -59,10 +59,8 @@ CREATE TABLE IF NOT EXISTS Recall_Table(
     SuggestedDate TEXT NOT NULL,
     Priority INTEGER NOT NULL,
     Completed INTEGER DEFAULT 0,
-    FOREIGN KEY(PatientID)
-    REFERENCES Patients_Table(PatientID),
-    FOREIGN KEY(AppointmentID)
-    REFERENCES Appointments_Table(AppointmentID)
+    FOREIGN KEY(PatientID) REFERENCES Patients_Table(PatientID),
+    FOREIGN KEY(AppointmentID) REFERENCES Appointments_Table(AppointmentID)
 )
 """)
 
