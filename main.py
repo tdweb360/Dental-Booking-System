@@ -45,7 +45,7 @@ def staff_menu(username):
                 appointments.searchMenu(username)
 
             elif choice == 4:
-                Recalls.viewRecalls()
+                Recalls.viewRecalls(username)
 
             elif choice == 5:
                 valid = True
@@ -88,7 +88,7 @@ def manager_menu(username):
                 staff.staffManagementMenu(username)
 
             elif choice == 6:
-                Recalls.viewRecalls()
+                Recalls.viewRecalls(username)
 
             elif choice == 7:
                 Logging.viewAuditLog()

@@ -8,12 +8,15 @@ connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
 
-def bookAppointment(patientID, current_user):
+def bookAppointment(patientID, current_user, presentDate=None):
     staffID = staff.searchStaff()
     if staffID is None:
         print("No staff member selected")
         return
-    date = validateAppointmentDate()
+    if presentDate is None:
+        date = validateAppointmentDate()
+    else:
+        date = presentDate
     time = validateAppointmentTime()
     duration = selectDuration()
 
@@ -37,6 +40,9 @@ def bookAppointment(patientID, current_user):
             f"AppointmentID {appointmentID}, PatientID {patientID}, StaffID {staffID}"
         )
         print("Appointment booked")
+        return True
+    else:
+        return False
 
 
 def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID=None):

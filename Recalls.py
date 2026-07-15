@@ -1,7 +1,6 @@
 import sqlite3
-import patients
-from datetime import datetime
-
+import appointments
+from datetime import datetime, timedelta
 connect = sqlite3.connect("database.db")
 cursor = connect.cursor()
 
@@ -64,8 +63,9 @@ def generateRecalls():
                 5
             ))
     connect.commit()
+    print(f"Created recall for PatientID {patientID}")
 
-def viewRecalls():
+def viewRecalls(current_user):
     #inner join = combine records from two tables whenever there are matching values in a field common to both tables
     cursor.execute("""
     SELECT RecallID,
@@ -92,53 +92,109 @@ def viewRecalls():
                 f" | Suggested Date: {r[4]}"
                 f" | Priority: {r[5]}"
             )
-        manageRecalls()
-def manageRecalls():
+        manageRecalls(current_user)
+
+def manageRecalls(current_user):
     valid = False
     while not valid:
         try:
             choice = int(input(
                 "\n1. Change Priority"
-                "\n2. Mark Complete"
-                "\n3. Exit\n\n"
+                "\n2. Book Recall"
+                "\n3. Mark Complete"
+                "\n4. Exit\n\n"
                 ">> "
             ))
             if choice == 1:
                 changePriority()
             elif choice == 2:
-                completeRecall()
+                bookRecall(current_user)
             elif choice == 3:
+                completeRecall()
+            elif choice == 4:
                 valid = True
             else:
                 print("Not a valid option")
         except ValueError:
             print("Invalid Input")
 
-def changePriority():
-
+def bookRecall(current_user):
     try:
         recallID = int(input(
             "Enter Recall ID: "
         ))
-        priority = int(input(
-            "Enter Priority (1-5): "
-        ))
-        if 1 <= priority <= 5:
-            cursor.execute("""
-            UPDATE Recall_Table
-            SET Priority = ?
-            WHERE RecallID = ?
-            """, (
-                priority,
-                recallID
-            ))
-            connect.commit()
-            print("Priority updated")
-        else:
-            print("Priority must be between 1 and 5")
+        cursor.execute("""
+        SELECT PatientID,
+               SuggestedDate
+        FROM Recall_Table
+        WHERE RecallID = ?
+        """, (recallID,))
+        result = cursor.fetchone()
+        if result is None:
+            print("Recall not found")
+            return
+        patientID = result[0]
+        suggestedDate = result[1]
+        valid = False
+        while valid == False:
+            try:
+                choice = int(input(
+                    "\n1. Use Suggested Date"
+                    "\n2. Book Earlier/Later"
+                    "\n3. Exit\n\n"
+                    ">> "
+                ))
+                if choice == 1:
+                    successful = appointments.bookAppointment(patientID,current_user,suggestedDate)
+                elif choice == 2:
+                    successful = appointments.bookAppointment(patientID,current_user)
+                elif choice == 3:
+                    return
+                else:
+                    print("Not a valid option")
+                    continue
 
+                if successful:
+                    cursor.execute("""
+                    UPDATE Recall_Table
+                    SET Completed = 1
+                    WHERE RecallID = ?
+                    """, (recallID,))
+                    connect.commit()
+                    print("Recall completed")
+                    valid = True
+            except ValueError:
+                print("Error")
     except ValueError:
         print("Invalid Input")
+
+def changePriority():
+    valid = False
+    while valid == False:
+        try:
+            recallID = int(input(
+                "Enter Recall ID: "
+            ))
+            priority = int(input(
+                "Enter Priority (1-5): "
+            ))
+            if 1 <= priority <= 5:
+                cursor.execute("""
+                UPDATE Recall_Table
+                SET Priority = ?
+                WHERE RecallID = ?
+                """, (
+                    priority,
+                    recallID
+                ))
+                connect.commit()
+                print("Priority updated")
+                valid = True
+            else:
+                print("Priority must be between 1 and 5")
+
+        except ValueError:
+            print("Invalid Input")
 
 
 def completeRecall():
