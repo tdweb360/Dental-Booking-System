@@ -30,7 +30,7 @@ def staff_menu(username):
                 "4. Logout\n\n>>  "))
 
             if choice == 1:
-                patients.enterpatientdetails()
+                patients.enterpatientdetails(username)
 
             elif choice == 2:
                 patientID = patients.searchPatient()
@@ -63,7 +63,7 @@ def manager_menu(username):
                 "7. Logout\n\n>>  "))
 
             if choice == 1:
-                patients.enterpatientdetails()
+                patients.enterpatientdetails(username)
 
             elif choice == 2:
                 patientID = patients.searchPatient()

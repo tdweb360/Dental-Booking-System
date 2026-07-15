@@ -6,7 +6,7 @@ import Logging
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
-def enterpatientdetails():
+def enterpatientdetails(current_user):
     confirm = False
     attempts = 0
     while confirm == False and attempts < 5:
@@ -44,8 +44,8 @@ def enterpatientdetails():
             "CREATE_PATIENT",
             f"PatientID {patientID}"
         )
-    except:
-        print("database error")
+    except Exception as e:
+        print(f"Database error: {e}")
 
 def _validateFNandSN():
     valid = False
