@@ -50,14 +50,23 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS AuditLog (
 )
                 """)
 
-cursor.execute("""CREATE TABLE Recall_Table(
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS Recall_Table(
     RecallID INTEGER PRIMARY KEY AUTOINCREMENT,
     PatientID INTEGER NOT NULL,
-    DueDate TEXT NOT NULL,
+    AppointmentID INTEGER NOT NULL,
+    SuggestedDate TEXT NOT NULL,
     Priority INTEGER NOT NULL,
     Completed INTEGER DEFAULT 0,
-    FOREIGN KEY(PatientID) REFERENCES Patients_Table(PatientID)
-    """)
+    FOREIGN KEY(PatientID)
+    REFERENCES Patients_Table(PatientID),
+    FOREIGN KEY(AppointmentID)
+    REFERENCES Appointments_Table(AppointmentID)
+)
+""")
+
+connect.commit()
 
 
 connect.commit()

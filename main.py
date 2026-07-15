@@ -4,6 +4,8 @@ import authentication
 import sqlite3
 import staff
 import Logging
+import Recalls
+
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
@@ -27,7 +29,8 @@ def staff_menu(username):
                 "1. Add Patient\n"
                 "2. Search Patient/book appointment\n"
                 "3. Manage Appointments\n"
-                "4. Logout\n\n>>  "))
+                "4. View Recall List\n"
+                "5. Logout\n\n>>  "))
 
             if choice == 1:
                 patients.enterpatientdetails(username)
@@ -41,6 +44,9 @@ def staff_menu(username):
                 appointments.searchMenu(username)
 
             elif choice == 4:
+                Recalls.viewOverdueRecalls()
+
+            elif choice == 5:
                 valid = True
 
             else:
@@ -59,8 +65,9 @@ def manager_menu(username):
                 "3. Manage Appointments\n"
                 "4. Add Staff\n"
                 "5. Manage Staff\n"
-                "6. View Audit Log\n"
-                "7. Logout\n\n>>  "))
+                "6. View Recall List\n"
+                "7. View Audit Log\n"
+                "8. Logout\n\n>>  "))
 
             if choice == 1:
                 patients.enterpatientdetails(username)
@@ -80,9 +87,12 @@ def manager_menu(username):
                 staff.staffManagementMenu(username)
 
             elif choice == 6:
-                Logging.viewAuditLog()
+                Recalls.viewOverdueRecalls()
 
             elif choice == 7:
+                Logging.viewAuditLog()
+
+            elif choice == 8:
                 valid = True
 
             else:
