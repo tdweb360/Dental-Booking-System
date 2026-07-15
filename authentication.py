@@ -1,6 +1,7 @@
 import sqlite3
 
 import bcrypt
+import Logging
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -24,9 +25,22 @@ def login():
             storedHash = result[1]
             role = result[2]
             if bcrypt.checkpw(password.encode(), storedHash.encode()):
-                return staffID, role
+                Logging.log_action(
+                    username,"LOGIN_SUCCESS",f"StaffID {staffID}")
+                return staffID, role, username
             else:
                 print("Invalid Username or Password")
+                Logging.log_action(
+                    username,
+                    "LOGIN_FAILED",
+                    "Invalid credentials"
+                )
                 attempts += 1
     print("Too many failed attempts")
+    Logging.log_action(
+        username,
+        "ACCOUNT_LOCKED",
+        "Three failed login attempts"
+    )
     return None
+

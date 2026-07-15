@@ -3,6 +3,7 @@ import appointments
 import authentication
 import sqlite3
 import staff
+import Logging
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
@@ -12,13 +13,13 @@ def main():
     result = authentication.login()
     if result is None:
         return
-    staffID, role = result
+    staffID, role, username = result
     if role == "Manager":
-        manager_menu()
+        manager_menu(username)
     else:
-        staff_menu()
+        staff_menu(username)
 
-def staff_menu():
+def staff_menu(username):
     valid = False
     while not valid:
         try:
@@ -34,10 +35,10 @@ def staff_menu():
             elif choice == 2:
                 patientID = patients.searchPatient()
                 if patientID is not None:
-                    patients.patientmanagementwindow(patientID)
+                    patients.patientmanagementwindow(patientID, username)
 
             elif choice == 3:
-                appointments.searchMenu()
+                appointments.searchMenu(username)
 
             elif choice == 4:
                 valid = True
@@ -48,7 +49,7 @@ def staff_menu():
         except ValueError:
             print("Incorrect datatype")
 
-def manager_menu():
+def manager_menu(username):
     valid = False
     while not valid:
         try:
@@ -58,7 +59,8 @@ def manager_menu():
                 "3. Manage Appointments\n"
                 "4. Add Staff\n"
                 "5. Manage Staff\n"
-                "6. Logout\n\n>>  "))
+                "6. View Audit Log\n"
+                "7. Logout\n\n>>  "))
 
             if choice == 1:
                 patients.enterpatientdetails()
@@ -66,18 +68,21 @@ def manager_menu():
             elif choice == 2:
                 patientID = patients.searchPatient()
                 if patientID is not None:
-                    patients.patientmanagementwindow(patientID)
+                    patients.patientmanagementwindow(patientID,username)
 
             elif choice == 3:
-                appointments.searchMenu()
+                appointments.searchMenu(username)
 
             elif choice == 4:
-                staff.addStaff()
+                staff.addStaff(username)
 
             elif choice == 5:
-                staff.staffManagementMenu()
+                staff.staffManagementMenu(username)
 
             elif choice == 6:
+                Logging.viewAuditLog()
+
+            elif choice == 7:
                 valid = True
 
             else:

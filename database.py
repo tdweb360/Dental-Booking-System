@@ -41,6 +41,16 @@ CREATE TABLE IF NOT EXISTS Staff_Table(
 )
 """)
 
+cursor.execute("""CREATE TABLE IF NOT EXISTS AuditLog (
+    LogID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Username TEXT NOT NULL,
+    Action TEXT NOT NULL,
+    Details TEXT,
+    Timestamp TEXT NOT NULL
+)
+                """)
+
+
 cursor.execute("PRAGMA table_info(Appointments_Table)")
 print(cursor.fetchall())
 

@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime
 import re
 import appointments
+import Logging
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -32,6 +33,17 @@ def enterpatientdetails():
             """, (firstname,surname,date_of_birth,phonenum,))
 
         connect.commit()
+        cursor.execute("""
+        SELECT last_insert_rowid()
+        """)
+
+        patientID = cursor.fetchone()[0]
+
+        Logging.log_action(
+            current_user,
+            "CREATE_PATIENT",
+            f"PatientID {patientID}"
+        )
     except:
         print("database error")
 
@@ -195,7 +207,7 @@ def selectPatient(results,valid_ids):
         except ValueError:
             print("Invalid Input")
 
-def patientmanagementwindow(chosenID):
+def patientmanagementwindow(chosenID, staff_username):
     valid = False
     while not valid:
         try:
@@ -206,14 +218,14 @@ def patientmanagementwindow(chosenID):
                                "4. Exit patient manager\n\n"
                                ">>  "))
             if choice == 1:
-                editPatientMenu(chosenID)
+                editPatientMenu(chosenID, staff_username)
                 valid = True
             elif choice == 2:
-                successful = deletePatient(chosenID)
+                successful = deletePatient(chosenID, staff_username)
                 if successful == True:
                     valid = True
             elif choice == 3:
-                appointments.bookAppointment(chosenID)
+                appointments.bookAppointment(chosenID, staff_username)
 
             elif choice == 4:
                 valid = True
@@ -222,21 +234,25 @@ def patientmanagementwindow(chosenID):
         except ValueError:
             print("Invalid Input")
 
-def deletePatient(patientID):
-    confirm = input("Are you sure?\n\n>>  ").strip().lower()
-    if confirm == "yes" or confirm == "y":
+def deletePatient(patientID, current_user):
+    confirm = input("Are you sure?\n\n>> ").strip().lower()
+    if confirm in ["yes", "y"]:
         cursor.execute("""
         DELETE FROM Patients_Table
         WHERE PatientID = ?
         """, (patientID,))
         connect.commit()
+        Logging.log_action(
+            current_user,
+            "DELETE_PATIENT",
+            f"PatientID {patientID}"
+        )
         return True
-    else:
-        return False
+    return False
 
 
 
-def editPatientMenu(patientID):
+def editPatientMenu(patientID, current_user):
     valid = False
     while valid == False:
         try:
@@ -247,46 +263,70 @@ def editPatientMenu(patientID):
                                "4. Exit editing\n\n"
                                ">>  "))
             if choice == 1:
-                editName(patientID)
+                editName(patientID, current_user)
             elif choice == 2:
-                editDOB(patientID)
+                editDOB(patientID, current_user)
             elif choice == 3:
-                editPhone(patientID)
+                editPhone(patientID, current_user)
             elif choice == 4:
                 valid = True
         except ValueError:
             print("Incorrect datatype")
 
-def editName(patientID):
+def editName(patientID, current_user):
     firstname, surname = _validateFNandSN()
-    cursor.execute("""
-    UPDATE Patients_Table
-    SET FirstName = ?, Surname = ?
-    WHERE PatientID = ?
-    """, (firstname,surname,patientID))
-    connect.commit()
-    print("Patient updated successfully")
+    try:
+        cursor.execute("""
+        UPDATE Patients_Table
+        SET FirstName = ?, Surname = ?
+        WHERE PatientID = ?
+        """, (firstname,surname,patientID))
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "EDIT_PATIENT_NAME",
+            f"PatientID {patientID}"
+        )
+        print("Patient updated successfully")
+    except:
+        print("Database Error")
 
 
-def editDOB(patientID):
+def editDOB(patientID, current_user):
     dob = _validateDOB()
-    cursor.execute("""
-    UPDATE Patients_Table
-    SET Date_of_birth = ?
-    WHERE PatientID = ?
-    """, (dob,patientID))
-    connect.commit()
-    print("Patient updated successfully")
+    try:
+        cursor.execute("""
+        UPDATE Patients_Table
+        SET Date_of_birth = ?
+        WHERE PatientID = ?
+        """, (dob,patientID))
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "EDIT_PATIENT_DOB",
+            f"PatientID {patientID}"
+        )
+        print("Patient updated successfully")
+    except:
+        print("Database Error")
 
 
-def editPhone(patientID):
+def editPhone(patientID, current_user):
     phone = _validatePhoneNUM()
-    cursor.execute("""
-    UPDATE Patients_Table
-    SET Phone_Num = ?
-    WHERE PatientID = ?
-    """, (phone,patientID))
-    connect.commit()
-    print("Patient updated successfully")
+    try:
+        cursor.execute("""
+        UPDATE Patients_Table
+        SET Phone_Num = ?
+        WHERE PatientID = ?
+        """, (phone,patientID))
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "EDIT_PATIENT_PHONE",
+            f"PatientID {patientID}"
+        )
+        print("Patient updated successfully")
+    except:
+        print("Database Error")
 
 

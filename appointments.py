@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 
 import patients
 import staff
+import Logging
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
 
-def bookAppointment(patientID):
+def bookAppointment(patientID, current_user):
     staffID = staff.searchStaff()
     if staffID is None:
         print("No staff member selected")
@@ -25,8 +26,16 @@ def bookAppointment(patientID):
         (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
         VALUES (?,?,?,?,?)
         """, (date, time, patientID, staffID, duration))
-
         connect.commit()
+        cursor.execute("""
+        SELECT last_insert_rowid()
+        """)
+        appointmentID = cursor.fetchone()[0]
+        Logging.log_action(
+            current_user,
+            "CREATE_APPOINTMENT",
+            f"AppointmentID {appointmentID}, PatientID {patientID}, StaffID {staffID}"
+        )
         print("Appointment booked")
 
 
@@ -161,7 +170,7 @@ def selectDuration():
         except ValueError:
             print("Invalid input")
 
-def appointmentsmenu(results):
+def appointmentsmenu(results, current_user):
     valid = False
     while not valid:
         try:
@@ -173,10 +182,10 @@ def appointmentsmenu(results):
             ))
 
             if choice == 1:
-                cancelAppointment(results)
+                cancelAppointment(results, current_user)
                 valid = True
             elif choice == 2:
-                editAppointmentMenu(results)
+                editAppointmentMenu(results, current_user)
                 valid = True
             elif choice == 3:
                 valid = True
@@ -185,7 +194,7 @@ def appointmentsmenu(results):
         except ValueError:
             print("Invalid Input")
 
-def editAppointmentMenu(results):
+def editAppointmentMenu(results, current_user):
     valid_ids = []
 
     for a in results:
@@ -200,7 +209,7 @@ def editAppointmentMenu(results):
             ))
 
             if appointmentID in valid_ids:
-                editAppointment(appointmentID)
+                editAppointment(appointmentID, current_user)
                 valid = True
 
             else:
@@ -209,13 +218,14 @@ def editAppointmentMenu(results):
         except ValueError:
             print("Invalid Input")
 
-def editAppointment(appointmentID):
+def editAppointment(appointmentID, current_user):
 
     cursor.execute("""
     SELECT PatientID
     FROM Appointments_Table
     WHERE AppointmentID = ?
     """, (appointmentID,))
+
     patientID = cursor.fetchone()[0]
     staffID = staff.searchStaff()
     date = validateAppointmentDate()
@@ -245,11 +255,16 @@ def editAppointment(appointmentID):
                 WHERE AppointmentID = ?
                 """, (date, time, duration, staffID, appointmentID))
                 connect.commit()
+                Logging.log_action(
+                    current_user,
+                    "EDIT_APPOINTMENT",
+                    f"AppointmentID {appointmentID}, StaffID {staffID}"
+                )
                 print("Appointment updated")
             except:
                 print("Database error")
 
-def searchMenu():
+def searchMenu(current_user):
     valid = False
     while not valid:
         try:
@@ -259,11 +274,11 @@ def searchMenu():
                                "4. Exit\n\n"
                                ">>  "))
             if choice == 1:
-                viewAllAppointments()
+                viewAllAppointments(current_user)
             elif choice == 2:
-                viewAppointmentsbyDate()
+                viewAppointmentsbyDate(current_user)
             elif choice == 3:
-                viewAppointmentsbyPatient()
+                viewAppointmentsbyPatient(current_user)
             elif choice == 4:
                 valid = True
             else:
@@ -273,7 +288,7 @@ def searchMenu():
 
 
 
-def fetchAppointments(results):
+def fetchAppointments(results,current_user):
     if len(results) == 0:
         print("No appointments found")
         return
@@ -285,33 +300,33 @@ def fetchAppointments(results):
               f" | PatientID: {p[3]}"
               f" | StaffID: {p[4]}"
               f" | Duration: {p[5]} mins")
-    appointmentsmenu(results)
+    appointmentsmenu(results, current_user)
 
 
-def viewAllAppointments():
+def viewAllAppointments(current_user):
     cursor.execute("""
     SELECT * FROM Appointments_Table""")
     results = cursor.fetchall()
-    fetchAppointments(results)
+    fetchAppointments(results, current_user)
 
-def viewAppointmentsbyDate():
+def viewAppointmentsbyDate(current_user):
     date = validateAppointmentDate()
     cursor.execute("""
     SELECT * FROM Appointments_Table 
     WHERE Appointment_date = ?""",(date,))
     results = cursor.fetchall()
-    fetchAppointments(results)
+    fetchAppointments(results, current_user)
 
-def viewAppointmentsbyPatient():
+def viewAppointmentsbyPatient(current_user):
     PatientID = patients.searchPatient()
     cursor.execute("""
     SELECT * FROM Appointments_Table
     WHERE PatientID = ?""",(PatientID,))
     results = cursor.fetchall()
-    fetchAppointments(results)
+    fetchAppointments(results, current_user)
 
 
-def cancelAppointment(results):
+def cancelAppointment(results, current_user):
     valid = False
     while not valid:
         try:
@@ -330,10 +345,15 @@ def cancelAppointment(results):
                         WHERE AppointmentID = ?
                         """,(enteredID,))
                         connect.commit()
+                        Logging.log_action(
+                            current_user,
+                            "DELETE_APPOINTMENT",
+                            f"AppointmentID {enteredID}"
+                        )
                         print("Deleted successfully")
                         valid = True
                     elif confirm in ["no","n"]:
-                        print("Cancelled")
+                        print("Cancelled deletion")
                         break
 
 

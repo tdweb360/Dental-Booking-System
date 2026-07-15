@@ -78,7 +78,7 @@ cursor = connect.cursor()
 # connect.commit()
 # connect.close()
 #
-# print("✅ Appointments table populated")
+# print("Appointments table populated")
 
 # cursor.execute("DELETE FROM Staff_Table")
 # cursor.execute("DELETE FROM sqlite_sequence WHERE name='Staff_Table'")
