@@ -84,15 +84,49 @@ cursor = connect.cursor()
 # cursor.execute("DELETE FROM sqlite_sequence WHERE name='Staff_Table'")
 # connect.commit()
 
-cursor.execute("""
-DELETE FROM Appointments_Table
-""")
+# cursor.execute("""
+# DELETE FROM Appointments_Table
+# """)
+#
+# cursor.execute("""
+# DELETE FROM sqlite_sequence
+# WHERE name = 'Appointments_Table'
+# """)
+#
+# connect.commit()
+#
+# print("Appointments deleted and IDs reset")
 
-cursor.execute("""
-DELETE FROM sqlite_sequence
-WHERE name = 'Appointments_Table'
-""")
+import sqlite3
+
+connect = sqlite3.connect("database.db")
+cursor = connect.cursor()
+
+cursor.execute("DELETE FROM Recall_Table")
+
+cursor.executemany("""
+INSERT INTO Recall_Table
+(PatientID,
+ AppointmentID,
+ SuggestedDate,
+ Priority,
+ Completed)
+VALUES (?,?,?,?,?)
+""", [
+
+    (1, 101, "2026-08-01", 1, 0),
+    (2, 102, "2026-08-15", 2, 0),
+    (3, 103, "2026-09-01", 3, 0),
+    (4, 104, "2026-09-15", 4, 0),
+    (5, 105, "2026-10-01", 5, 0),
+
+    # completed recall
+    (6, 106, "2026-07-01", 1, 1)
+
+])
 
 connect.commit()
 
-print("Appointments deleted and IDs reset")
+print("Recall test data created")
+
+connect.close()

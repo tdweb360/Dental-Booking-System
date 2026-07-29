@@ -103,7 +103,5 @@ def manager_menu(username):
             print("Incorrect datatype")
 
 
-
-
 if __name__ == "__main__":
     main()

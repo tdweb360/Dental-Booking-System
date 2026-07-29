@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS Recall_Table(
 connect.commit()
 
 
+
 connect.commit()
 connect.commit()
 connect.close()

@@ -62,8 +62,9 @@ def generateRecalls():
                 suggestedDate,
                 5
             ))
+            print(f"Created recall for PatientID {patientID}")
     connect.commit()
-    print(f"Created recall for PatientID {patientID}")
+
 
 def viewRecalls(current_user):
     #inner join = combine records from two tables whenever there are matching values in a field common to both tables
@@ -101,7 +102,7 @@ def manageRecalls(current_user):
             choice = int(input(
                 "\n1. Change Priority"
                 "\n2. Book Recall"
-                "\n3. Mark Complete"
+                "\n3. Complete Recall Without Booking Follow-Up"
                 "\n4. Exit\n\n"
                 ">> "
             ))
@@ -110,7 +111,11 @@ def manageRecalls(current_user):
             elif choice == 2:
                 bookRecall(current_user)
             elif choice == 3:
-                completeRecall()
+                confirm = (input("Are you sure")).lower().strip()
+                if confirm in ["yes","y"]:
+                    completeRecall()
+                else:
+                    print("Recall left active")
             elif choice == 4:
                 valid = True
             else:
@@ -211,3 +216,53 @@ def completeRecall():
         print("Recall completed")
     except ValueError:
         print("Invalid Input")
+
+
+def testRecalls():
+
+    print("\n===== TESTING RECALL LIST =====\n")
+
+    cursor.execute("""
+    SELECT *
+    FROM Recall_Table
+    """)
+
+    recalls = cursor.fetchall()
+
+    print("Recall records found:", len(recalls))
+
+    for r in recalls:
+        print(r)
+
+    print("\n===== TESTING ACTIVE RECALLS =====\n")
+
+    cursor.execute("""
+    SELECT RecallID,
+           Patients_Table.PatientID,
+           Patients_Table.FirstName,
+           Patients_Table.Surname,
+           SuggestedDate,
+           Priority
+    FROM Recall_Table
+
+    INNER JOIN Patients_Table
+    ON Recall_Table.PatientID = Patients_Table.PatientID
+
+    WHERE Completed = 0
+    ORDER BY Priority ASC, SuggestedDate ASC
+    """)
+
+    results = cursor.fetchall()
+
+    print("Active recalls:", len(results))
+
+    for r in results:
+        print(
+            f"RecallID: {r[0]}"
+            f" | PatientID: {r[1]}"
+            f" | Name: {r[2]} {r[3]}"
+            f" | Suggested Date: {r[4]}"
+            f" | Priority: {r[5]}"
+        )
+
+    print("\n===== TEST COMPLETE =====")
