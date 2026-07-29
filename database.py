@@ -50,7 +50,6 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS AuditLog (
 )
                 """)
 
-
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS Recall_Table(
     RecallID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +62,7 @@ CREATE TABLE IF NOT EXISTS Recall_Table(
     FOREIGN KEY(AppointmentID) REFERENCES Appointments_Table(AppointmentID)
 )
 """)
+
 
 connect.commit()
 
