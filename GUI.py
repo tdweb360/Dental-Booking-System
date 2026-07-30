@@ -1,7 +1,8 @@
 import customtkinter as ctk
 import authentication
 import Logging
-
+import patients
+from tkinter import ttk
 
 class App(ctk.CTk):
 
@@ -42,30 +43,11 @@ class LoginFrame(ctk.CTkFrame):
         super().__init__(app)
 
         self.app = app
-        self.username_entry = ctk.CTkEntry(
-            self,
-            placeholder_text="Username"
-        )
-        self.password_entry = ctk.CTkEntry(
-            self,
-            placeholder_text="Password",
-            show="*"
-        )
-        self.login_button = ctk.CTkButton(
-            self,
-            text="Login",
-            command=self.login_pressed
-        )
-        self.error_label = ctk.CTkLabel(
-            self,
-            text="Username or password is incorrect",
-            text_color="red"
-        )
-        self.locked_label = ctk.CTkLabel(
-            self,
-            text="Too many attempts. Restart application",
-            text_color="red"
-        )
+        self.username_entry = ctk.CTkEntry(self,placeholder_text="Username")
+        self.password_entry = ctk.CTkEntry(self,placeholder_text="Password",show="*")
+        self.login_button = ctk.CTkButton(self,text="Login",command=self.login_pressed)
+        self.error_label = ctk.CTkLabel(self,text="Username or password is incorrect",text_color="red")
+        self.locked_label = ctk.CTkLabel(self,text="Too many attempts. Restart application",text_color="red")
 
         self.username_entry.pack(pady=10)
         self.password_entry.pack(pady=10)
@@ -152,38 +134,99 @@ class DashboardFrame(ctk.CTkFrame):
 class PatientFrame(ctk.CTkFrame):
 
     def __init__(self, app):
-
         super().__init__(app)
-
         self.app = app
-        self.title_label = ctk.CTkLabel(self,text="Patient Management")
-        self.search_entry = ctk.CTkEntry(self,placeholder_text="Patient Name")
-        self.search_button = ctk.CTkButton(self,text="Search")
-        self.back_button = ctk.CTkButton(self,text="Back",command=lambda:app.show_frame(app.dashboard_frame))
+
+        self.search_frame = ctk.CTkFrame(self)
+        self.results_frame = ctk.CTkScrollableFrame(self,width=700,height=300)
+
+        self.title_label = ctk.CTkLabel(self,text="Patient Management",font=ctk.CTkFont(size=35, weight="bold"))
+
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+        self.no_results_label = ctk.CTkLabel(self,text="No patients found",text_color="red")
+        self.search_button = ctk.CTkButton(self.search_frame,text="Search",command=self.search_patient)
+
+        self.name_label = ctk.CTkLabel(self.search_frame,text="Search By Name")
+        self.phone_label = ctk.CTkLabel(self.search_frame,text="Search By Phone")
+        self.dob_label = ctk.CTkLabel(self.search_frame,text="Search By Date Of Birth")
+
+        self.name_entry = ctk.CTkEntry(self.search_frame,placeholder_text="First or Last Name")
+        self.phone_entry = ctk.CTkEntry(self.search_frame,placeholder_text="07123456789")
+        self.dob_entry = ctk.CTkEntry(self.search_frame,placeholder_text="DD/MM/YYYY")
+
+        self.search_frame.grid_columnconfigure(0, weight=1)
+        self.search_frame.grid_columnconfigure(1, weight=1)
+        self.search_frame.grid_columnconfigure(2, weight=1)
+
+        self.name_label.grid(row=0,column=0,padx=20)
+        self.phone_label.grid(row=0,column=1,padx=20)
+        self.dob_label.grid(row=0,column=2,padx=20)
+
+        self.name_entry.grid(row=1,column=0,padx=20,sticky="ew")
+        self.phone_entry.grid(row=1,column=1,padx=20,sticky="ew")
+        self.dob_entry.grid(row=1,column=2,padx=20,sticky="ew")
+        self.search_button.grid(row=2,column=0,columnspan=3,pady=15)
+
+        self.header = ctk.CTkFrame(self.results_frame, fg_color="#1F6AA5")
+        self.header.pack(fill="x",pady=(0, 5))
+        ctk.CTkLabel(self.header,text="ID",width=60).grid(row=0, column=0, padx=5)
+        ctk.CTkLabel(self.header,text="First Name",width=120).grid(row=0, column=1, padx=5)
+        ctk.CTkLabel(self.header,text="Surname",width=120).grid(row=0, column=2, padx=5)
+        ctk.CTkLabel(self.header,text="DOB",width=120).grid(row=0, column=3, padx=5)
+        ctk.CTkLabel(self.header,text="Phone",width=120).grid(row=0, column=4, padx=5)
 
         self.title_label.pack(pady=20)
-        self.search_entry.pack(pady=10)
-        self.search_button.pack(pady=10)
-        self.back_button.pack(pady=20)
+        self.search_frame.pack(fill="x",padx=20,pady=10)
+        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+        self.back_button.pack(pady=10)
 
+
+    def search_patient(self):
+        name = self.name_entry.get().strip()
+        phone = self.phone_entry.get().strip()
+        dob = self.dob_entry.get().strip()
+        results = patients.search_patients(name=name,phone=phone,dob=dob)
+        for w in self.results_frame.winfo_children():
+            if w != self.header:
+                w.destroy()
+        self.no_results_label.pack_forget()
+        if not results:
+            self.no_results_label.pack(pady=10)
+            return
+        for patient in results:
+            self.create_patient_row(patient)
+
+    def create_patient_row(self, patient):
+
+        row = ctk.CTkFrame(self.results_frame)
+        row.pack(fill="x", pady=2)
+        widths = [60, 120, 120, 120, 120]
+        for col, value in enumerate(patient[:5]):
+            ctk.CTkLabel(row,text=value,width=widths[col]).grid(row=0,column=col,padx=5)
+        ctk.CTkButton(row,text="Open",width=80).grid(row=0,column=5,padx=5)
+
+    def back(self):
+        self.app.show_frame(self.app.dashboard_frame)
 
 class AppointmentFrame(ctk.CTkFrame):
 
     def __init__(self, app):
-
         super().__init__(app)
-
+        self.app = app
         ctk.CTkLabel(self,text="Appointment Management").pack(pady=20)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
-        ctk.CTkButton(self,text="Back",command=lambda:app.show_frame(app.dashboard_frame)).pack(pady=20)
-
+    def back(self):
+        self.app.show_frame(self.app.dashboard_frame)
 
 class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
         super().__init__(app)
-
+        self.app = app
         ctk.CTkLabel(self,text="Recall Management").pack(pady=20)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
-        ctk.CTkButton(self,text="Back",command=lambda:app.show_frame(app.dashboard_frame)).pack(pady=20)
+    def back(self):
+        self.app.show_frame(self.app.dashboard_frame)
 app = App()
 app.mainloop()

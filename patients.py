@@ -101,7 +101,37 @@ def _validatePhoneNUM():
             print("Wrong format. Try 07XXXXXXXXX or +44XXXXXXXXXX")
     return phone
 
-def searchPatient():
+def search_patients(name="", phone="", dob=""):
+    query = """
+        SELECT *
+        FROM Patients_Table
+        WHERE 1=1
+    """
+    params = []
+    if name:
+        query += """
+            AND (FirstName LIKE ?
+            OR Surname LIKE ?)
+        """
+        params.extend([
+            f"%{name}%",
+            f"%{name}%"
+        ])
+    if phone:
+        query += """
+            AND Phone_Num LIKE ?
+        """
+        params.append(f"%{phone}%")
+    if dob:
+        query += """
+            AND Date_of_birth = ?
+        """
+        params.append(dob)
+
+    cursor.execute(query, params)
+    return cursor.fetchall()
+
+def searchPatient(name):
     valid = False
     while valid == False:
         try:
@@ -125,20 +155,18 @@ def searchPatient():
             print("")
 
 
-def searchName():
-    name = input("Enter name: ").strip().capitalize()
-    searchPattern = "%" + name + "%"
-    pattern = r"^[A-Za-z'-]+$"
-    if len(name) > 2 and re.match(pattern, name):
+def searchName(name):
 
-        cursor.execute("""
-        SELECT * FROM Patients_Table
-        WHERE FirstName LIKE ? or Surname LIKE ?
-                       """, (searchPattern,searchPattern))
-        results = cursor.fetchall()
-        return fetchQueryResults(results)
-    else:
-        print("Error")
+    searchPattern = "%" + name + "%"
+
+    cursor.execute("""
+        SELECT *
+        FROM Patients_Table
+        WHERE FirstName LIKE ?
+        OR Surname LIKE ?
+    """, (searchPattern, searchPattern))
+
+    return cursor.fetchall()
 
 
 def searchPhone():
