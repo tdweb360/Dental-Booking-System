@@ -13,7 +13,7 @@ def login(username,password):
     """, (username,))
     result = cursor.fetchone()
     if not result:
-        print("Invalid Username or Password")
+        print("")
     else:
         staffID = result[0]
         storedHash = result[1]
@@ -23,16 +23,10 @@ def login(username,password):
                 username,"LOGIN_SUCCESS",f"StaffID {staffID}")
             return staffID, role, username
         else:
-            print("Invalid Username or Password")
             Logging.log_action(
                 username,
                 "LOGIN_FAILED",
                 "Invalid credentials"
             )
-    Logging.log_action(
-        username,
-        "ACCOUNT_LOCKED",
-        "Three failed login attempts"
-    )
     return None
 
