@@ -127,32 +127,9 @@ def search_patients(name="", phone="", dob=""):
             AND Date_of_birth = ?
         """
         params.append(dob)
-
     cursor.execute(query, params)
     return cursor.fetchall()
 
-def searchPatient(name):
-    valid = False
-    while valid == False:
-        try:
-            choice = int(input("Do you want to search by:\n"
-                               "1. Name\n"
-                               "2. Phone Number\n"
-                               "3. Date of Birth\n"
-                               "4. Exit search\n\n"
-                               ">>  "))
-            if choice == 1:
-                return searchName()
-            elif choice == 2:
-                return searchPhone()
-            elif choice == 3:
-                return searchDOB()
-            elif choice == 4:
-                return None
-            else:
-                print("Not a valid option")
-        except ValueError:
-            print("")
 
 
 def searchName(name):
@@ -234,6 +211,15 @@ def selectPatient(results,valid_ids):
                 print("Not present")
         except ValueError:
             print("Invalid Input")
+
+
+def get_patient_by_id(patient_id):
+    cursor.execute("""
+        SELECT *
+        FROM Patients_Table
+        WHERE PatientID = ?
+    """, (patient_id,))
+    return cursor.fetchone()
 
 def patientmanagementwindow(chosenID, staff_username):
     valid = False

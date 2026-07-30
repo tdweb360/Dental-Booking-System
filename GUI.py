@@ -15,15 +15,21 @@ class App(ctk.CTk):
         self.attempts = 0
 
         self.login_frame = LoginFrame(self)
+
         self.dashboard_frame = DashboardFrame(self)
+
         self.patient_frame = PatientFrame(self)
+        self.patient_details_frame = PatientDetailsFrame(self)
         self.appointment_frame = AppointmentFrame(self)
         self.recall_frame = RecallFrame(self)
+
+
 
         self.frames = [
             self.login_frame,
             self.dashboard_frame,
             self.patient_frame,
+            self.patient_details_frame,
             self.appointment_frame,
             self.recall_frame
         ]
@@ -138,12 +144,12 @@ class PatientFrame(ctk.CTkFrame):
         self.app = app
 
         self.search_frame = ctk.CTkFrame(self)
-        self.results_frame = ctk.CTkScrollableFrame(self,width=700,height=300)
+        self.results_frame = ctk.CTkScrollableFrame(self,width=700,height=150)
 
         self.title_label = ctk.CTkLabel(self,text="Patient Management",font=ctk.CTkFont(size=35, weight="bold"))
 
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
-        self.no_results_label = ctk.CTkLabel(self,text="No patients found",text_color="red")
+        self.no_results_label = ctk.CTkLabel(self.results_frame,text="No patients found",text_color="red")
         self.search_button = ctk.CTkButton(self.search_frame,text="Search",command=self.search_patient)
 
         self.name_label = ctk.CTkLabel(self.search_frame,text="Search By Name")
@@ -157,6 +163,9 @@ class PatientFrame(ctk.CTkFrame):
         self.search_frame.grid_columnconfigure(0, weight=1)
         self.search_frame.grid_columnconfigure(1, weight=1)
         self.search_frame.grid_columnconfigure(2, weight=1)
+
+        self.results_title = ctk.CTkLabel(self,text="Search Results")
+
 
         self.name_label.grid(row=0,column=0,padx=20)
         self.phone_label.grid(row=0,column=1,padx=20)
@@ -177,8 +186,12 @@ class PatientFrame(ctk.CTkFrame):
 
         self.title_label.pack(pady=20)
         self.search_frame.pack(fill="x",padx=20,pady=10)
+        self.results_title.pack(pady=(5, 0))
         self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
-        self.back_button.pack(pady=10)
+        self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
+        self.bottom_frame.pack(fill="x",pady=10)
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+        self.bottom_frame.pack(fill="x",side="bottom",pady=(0, 20))
 
 
     def search_patient(self):
@@ -195,6 +208,8 @@ class PatientFrame(ctk.CTkFrame):
             return
         for patient in results:
             self.create_patient_row(patient)
+        self.results_title.configure(text=f"Search Results ({len(results)} found)")
+
 
     def create_patient_row(self, patient):
 
@@ -203,10 +218,46 @@ class PatientFrame(ctk.CTkFrame):
         widths = [60, 120, 120, 120, 120]
         for col, value in enumerate(patient[:5]):
             ctk.CTkLabel(row,text=value,width=widths[col]).grid(row=0,column=col,padx=5)
-        ctk.CTkButton(row,text="Open",width=80).grid(row=0,column=5,padx=5)
+        patient_id = patient[0]
+        ctk.CTkButton(row,text="Open",width=80,command=lambda: self.open_patient(patient_id)).grid(row=0,column=5,padx=5)
+
+    def open_patient(self, patient_id):
+        print(patient_id)
+        self.app.patient_details_frame.load_patient(patient_id)
+        self.app.show_frame(self.app.patient_details_frame)
 
     def back(self):
         self.app.show_frame(self.app.dashboard_frame)
+
+class PatientDetailsFrame(ctk.CTkFrame):
+
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        self.title_label = ctk.CTkLabel(self,text="Patient Details")
+        self.patient_info = ctk.CTkLabel(self,text="")
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+
+        self.title_label.pack(pady=20)
+        self.patient_info.pack(pady=20)
+        self.back_button.pack(pady=(20,20))
+
+    def load_patient(self, patient_id):
+        patient = patients.get_patient_by_id(
+            patient_id
+        )
+
+        self.patient_info.configure(
+            text=f"""
+                ID: {patient[0]}
+                Name: {patient[1]} {patient[2]}
+                DOB: {patient[3]}
+                Phone: {patient[4]}
+                """
+                    )
+
+    def back(self):
+        self.app.show_frame(self.app.patient_frame)
 
 class AppointmentFrame(ctk.CTkFrame):
 
