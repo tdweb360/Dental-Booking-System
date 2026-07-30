@@ -107,12 +107,23 @@ def create_dashboard_frame():
 def create_patient_frame():
     frame = ctk.CTkFrame(app)
     title = ctk.CTkLabel(frame,text="Patient Management")
+    search_label = ctk.CTkLabel(frame,text="Search Patient")
+
+    search_entry = ctk.CTkEntry(frame,placeholder_text="Patient Name")
+
+    search_button = ctk.CTkButton(frame,text="Search",command=search_patient)
     back_button = ctk.CTkButton(frame,text="Back",command=back_to_dashboard)
 
     title.pack(pady=20)
+    search_label.pack(pady=20)
+    search_entry.pack(pady=20)
+    search_button.pack(pady=5)
     back_button.pack(pady=20)
 
-    return frame
+    return frame, search_entry
+
+def search_patient():
+    name = search_entry.get()
 
 # appointment frame
 def create_appointment_frame():
@@ -140,7 +151,7 @@ def create_recall_frame():
 (login_frame,username_entry,password_entry,error_label,locked_out_label) = create_login_frame()
 
 (dashboard_frame,welcome_label) = create_dashboard_frame()
-patient_frame = create_patient_frame()
+patient_frame, search_entry = create_patient_frame()
 appointment_frame = create_appointment_frame()
 recall_frame = create_recall_frame()
 show_frame(login_frame)
