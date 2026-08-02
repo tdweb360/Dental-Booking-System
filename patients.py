@@ -189,6 +189,31 @@ def updatePatient(patientID, firstname, surname, dob, phone, current_user):
     except:
         return "DATABASE_ERROR"
 
+def addPatient(firstname, surname, dob, phone, current_user):
+    if not validateFNandSN(firstname, surname):
+        return "INVALID_NAME"
+    if not validateDOB(dob):
+        return "INVALID_DOB"
+    dob = datetime.strptime(dob, "%d/%m/%Y").strftime("%Y-%m-%d")
+    if not validatePhoneNUM(phone):
+        return "INVALID_PHONE"
+    try:
+        cursor.execute("""
+            INSERT INTO Patients_Table
+            (FirstName, Surname, Date_of_birth, Phone_Num)
+            VALUES (?, ?, ?, ?)
+        """, (firstname, surname, dob, phone))
+        connect.commit()
+        patientID = cursor.lastrowid
+        Logging.log_action(
+            current_user,
+            "CREATE_PATIENT",
+            f"PatientID {patientID}"
+        )
+        return "SUCCESS"
+    except Exception as e:
+        print(e)
+        return "DATABASE_ERROR"
 
 
 def editPhone(patientID, current_user):

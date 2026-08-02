@@ -2,7 +2,6 @@ import customtkinter as ctk
 import authentication
 import Logging
 import patients
-from tkinter import ttk
 
 class App(ctk.CTk):
 
@@ -20,6 +19,7 @@ class App(ctk.CTk):
 
         self.patient_frame = PatientFrame(self)
         self.patient_details_frame = PatientDetailsFrame(self)
+        self.add_patient_frame = AddPatientFrame(self)
         self.appointment_frame = AppointmentFrame(self)
         self.recall_frame = RecallFrame(self)
 
@@ -30,6 +30,7 @@ class App(ctk.CTk):
             self.dashboard_frame,
             self.patient_frame,
             self.patient_details_frame,
+            self.add_patient_frame,
             self.appointment_frame,
             self.recall_frame
         ]
@@ -107,6 +108,7 @@ class DashboardFrame(ctk.CTkFrame):
 
         self.welcome_label.pack(pady=20)
         self.patient_button.pack(pady=10)
+        self.add_patient_button.pack(pady=10)
         self.appointment_button.pack(pady=10)
         self.recall_button.pack(pady=10)
         self.logout_button.pack(pady=50)
@@ -116,7 +118,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.patient_frame)
 
     def open_add_patient(self):
-        self.app.show_frame(self.app.add_new_patient_frame)
+        self.app.show_frame(self.app.add_patient_frame)
 
     def open_appointment_frame(self):
         self.app.show_frame(self.app.appointment_frame)
@@ -348,7 +350,7 @@ class AddPatientFrame(ctk.CTkFrame):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
-        ctk.CTkLabel(self,text="Add Patient").pack(pady=20)
+        ctk.CTkLabel(self, text="Add Patient", font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
         self.firstname_label = ctk.CTkLabel(self, text="First Name")
         self.firstname_entry = ctk.CTkEntry(self)
         self.surname_label = ctk.CTkLabel(self, text="Surname")
@@ -357,12 +359,49 @@ class AddPatientFrame(ctk.CTkFrame):
         self.dob_entry = ctk.CTkEntry(self)
         self.phone_label = ctk.CTkLabel(self, text="Phone Number")
         self.phone_entry = ctk.CTkEntry(self)
-        self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
         self.feedback_label = ctk.CTkLabel(self, text="")
+        self.register_button = ctk.CTkButton(self, text="Register Patient", command=self.registerPatient)
         ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
+        self.firstname_label.pack()
+        self.firstname_entry.pack(pady=5)
 
+        self.surname_label.pack()
+        self.surname_entry.pack(pady=5)
 
+        self.dob_label.pack()
+        self.dob_entry.pack(pady=5)
+
+        self.phone_label.pack()
+        self.phone_entry.pack(pady=5)
+        self.register_button.pack(pady=10)
+        self.feedback_label.pack(pady=5)
+
+    def registerPatient(self):
+
+        firstname = self.firstname_entry.get().strip()
+        surname = self.surname_entry.get().strip()
+        dob = self.dob_entry.get().strip()
+        phone = self.phone_entry.get().strip()
+
+        result = patients.addPatient(firstname,surname,dob,phone,self.app.current_user)
+        if result == "SUCCESS":
+            self.feedback_label.configure(text="Patient registered successfully", text_color="green")
+            self.clearFields()
+        elif result == "INVALID_NAME":
+            self.feedback_label.configure(text="Invalid first name or surname", text_color="red")
+        elif result == "INVALID_DOB":
+            self.feedback_label.configure(text="Date must be DD/MM/YYYY", text_color="red")
+        elif result == "INVALID_PHONE":
+            self.feedback_label.configure(text="Phone number format is invalid", text_color="red")
+        else:
+            self.feedback_label.configure(text="Database error", text_color="red")
+
+    def clearFields(self):
+        self.firstname_entry.delete(0, "end")
+        self.surname_entry.delete(0, "end")
+        self.dob_entry.delete(0, "end")
+        self.phone_entry.delete(0, "end")
 
 
     def back(self):
