@@ -110,7 +110,7 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
     return False
 
 
-def validateAppointmentDate():
+def validateAppointmentDateOLD():
     valid = False
     formats = ["%d/%m/%Y", "%d-%m-%Y", "%d %m %Y", "%d.%m.%Y"]
 
@@ -137,7 +137,7 @@ def validateAppointmentDate():
             print("Error, incorrect format. Try DD/MM/YYYY")
 
 
-def validateAppointmentTime():
+def validateAppointmentTimeOLD():
     valid = False
 
     while not valid:
@@ -370,4 +370,35 @@ def cancelAppointment(results, current_user):
 
 
 
+def validateAppointmentDate(date):
+    try:
+        date = datetime.strptime(date, "%d/%m/%Y")
+        if date.date() < datetime.today().date():
+            return False
+        return True
+    except ValueError:
+        return False
 
+def validateAppointmentTime(time):
+    try:
+        time = datetime.strptime(time, "%H:%M")
+        if not (9 <= time.hour < 17):
+            return False
+        if time.minute not in [0, 15, 30, 45]:
+            return False
+        return True
+    except ValueError:
+        return False
+
+def getAppointmentsByDate(date):
+    date = datetime.strptime(
+        date,
+        "%d/%m/%Y"
+    ).strftime("%Y-%m-%d")
+    cursor.execute("""
+        SELECT Appointment_time
+        FROM Appointments_Table
+        WHERE Appointment_date = ?
+        ORDER BY Appointment_time
+    """, (date,))
+    return cursor.fetchall()

@@ -1,4 +1,6 @@
 import customtkinter as ctk
+
+import appointments
 import authentication
 import Logging
 import patients
@@ -20,7 +22,8 @@ class App(ctk.CTk):
         self.patient_frame = PatientFrame(self)
         self.patient_details_frame = PatientDetailsFrame(self)
         self.add_patient_frame = AddPatientFrame(self)
-        self.appointment_frame = AppointmentFrame(self)
+        self.existing_appointment_frame = ManageAppointmentFrame(self)
+        self.new_appointment_frame = BookAppointmentFrame(self)
         self.recall_frame = RecallFrame(self)
 
 
@@ -31,7 +34,8 @@ class App(ctk.CTk):
             self.patient_frame,
             self.patient_details_frame,
             self.add_patient_frame,
-            self.appointment_frame,
+            self.existing_appointment_frame,
+            self.new_appointment_frame,
             self.recall_frame
         ]
 
@@ -121,7 +125,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.add_patient_frame)
 
     def open_appointment_frame(self):
-        self.app.show_frame(self.app.appointment_frame)
+        self.app.show_frame(self.app.existing_appointment_frame)
 
     def open_recall_frame(self):
         self.app.show_frame(self.app.recall_frame)
@@ -237,7 +241,6 @@ class PatientFrame(ctk.CTkFrame):
         ctk.CTkButton(row,text="Open",width=80,command=lambda: self.open_patient(patient_id)).grid(row=0,column=5,padx=5)
 
     def open_patient(self, patient_id):
-        print(patient_id)
         self.app.patient_details_frame.load_patient(patient_id)
         self.app.show_frame(self.app.patient_details_frame)
 
@@ -263,8 +266,8 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.phone_label = ctk.CTkLabel(self, text="Phone Number")
         self.phone_entry = ctk.CTkEntry(self)
         self.save_button = ctk.CTkButton(self, text="Save Changes",command=self.saveChanges)
-        self.delete_button = ctk.CTkButton(self, text="Delete Patient",command=self.deletePatient)
-        self.appointment_button = ctk.CTkButton(self, text="Book Appointment")
+        self.delete_button = ctk.CTkButton(self, text="Delete Patient",text_color="red",command=self.deletePatient)
+        self.appointment_button = ctk.CTkButton(self, text="Book Appointment", command=self.openAppointmentScreen)
         self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
         self.feedback_label = ctk.CTkLabel(self, text="")
 
@@ -318,9 +321,11 @@ class PatientDetailsFrame(ctk.CTkFrame):
         else:
             self.feedback_label.configure(text="Database error",text_color="red")
 
+    def openAppointmentScreen(self):
+        self.app.new_appointment_frame.loadPatient(self.patient_id)
+        self.app.show_frame(self.app.new_appointment_frame)
 
     def deletePatient(self):
-        print("deletePatient called")
         self.confirm_window = ctk.CTkToplevel(self)
         self.confirm_window.title("Confirm Delete")
         self.confirm_window.geometry("300x150")
@@ -396,7 +401,7 @@ class AddPatientFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Phone number format is invalid", text_color="red")
         else:
             self.feedback_label.configure(text="Database error", text_color="red")
-#
+
     def clearFields(self):
         self.firstname_entry.delete(0, "end")
         self.surname_entry.delete(0, "end")
@@ -407,7 +412,55 @@ class AddPatientFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.dashboard_frame)
 
-class AppointmentFrame(ctk.CTkFrame):
+class BookAppointmentFrame(ctk.CTkFrame):
+    def __init__(self, app):
+
+        super().__init__(app)
+
+        self.app = app
+
+        ctk.CTkLabel(self, text="Book Appointment", font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+
+        self.patient_label = ctk.CTkLabel(self, text="")
+        self.date_entry = ctk.CTkEntry(self, placeholder_text="DD/MM/YYYY")
+        self.search_button = ctk.CTkButton(self, text="Check Availability", command=self.checkDay)
+        self.results_frame = ctk.CTkScrollableFrame(self)
+        self.feedback_label = ctk.CTkLabel(self, text="")
+
+        self.patient_label.pack()
+        self.date_entry.pack()
+        self.search_button.pack()
+        self.feedback_label.pack()
+        self.results_frame.pack()
+
+    def loadPatient(self, patient_id):
+        self.patient_id = patient_id
+
+        patient = patients.get_patient_by_id(patient_id)
+
+        self.patient_label.configure(text=f"{patient[1]} {patient[2]}")
+
+    def checkDay(self):
+        date = self.date_entry.get().strip()
+        if not appointments.validateAppointmentDate(date):
+            self.feedback_label.configure(text="Invalid date", text_color="red")
+            return
+        self.feedback_label.configure(text="")
+        results = appointments.getAppointmentsByDate(date)
+        print(results)
+
+
+
+    def createAppointment(patientID, date, time):
+        pass
+    def getAppointmentsByPatient(patientID):
+        pass
+    def deleteAppointment(appointmentID):
+        pass
+    def updateAppointment(appointmentID, date, time):
+        pass
+
+class ManageAppointmentFrame(ctk.CTkFrame):
 
     def __init__(self, app):
         super().__init__(app)
