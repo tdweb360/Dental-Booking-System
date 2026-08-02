@@ -189,9 +189,9 @@ class PatientFrame(ctk.CTkFrame):
         self.results_title.pack(pady=(5, 0))
         self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
         self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
-        self.bottom_frame.pack(fill="x",pady=10)
-        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
-        self.bottom_frame.pack(fill="x",side="bottom",pady=(0, 20))
+        self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
+        self.back_button = ctk.CTkButton(self.bottom_frame,text="Back",command=self.back)
+        self.back_button.pack()
 
 
     def search_patient(self):
@@ -236,11 +236,9 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.app = app
         self.title_label = ctk.CTkLabel(self,text="Patient Details")
         self.patient_info = ctk.CTkLabel(self,text="")
-        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
 
         self.title_label.pack(pady=20)
         self.patient_info.pack(pady=20)
-        self.back_button.pack(pady=(20,20))
 
     def load_patient(self, patient_id):
         patient = patients.get_patient_by_id(
