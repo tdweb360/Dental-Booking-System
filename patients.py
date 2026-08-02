@@ -127,20 +127,19 @@ def get_patient_by_id(patient_id):
 
 
 def deletePatient(patientID, current_user):
-    confirm = input("Are you sure?\n\n>> ").strip().lower()
-    if confirm in ["yes", "y"]:
+    try:
         cursor.execute("""
-        DELETE FROM Patients_Table
-        WHERE PatientID = ?
+            DELETE FROM Patients_Table
+            WHERE PatientID = ?
         """, (patientID,))
         connect.commit()
         Logging.log_action(
             current_user,
             "DELETE_PATIENT",
-            f"PatientID {patientID}"
-        )
+            f"PatientID {patientID}")
         return True
-    return False
+    except:
+        return False
 
 
 

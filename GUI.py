@@ -87,7 +87,7 @@ class LoginFrame(ctk.CTkFrame):
             staff_id, role, username = result
             self.app.current_user = username
             self.app.attempts = 0
-            self.app.dashboard_frame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}")
+            self.app.dashboard_frame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}",font= ctk.CTkFont(size=30, weight="bold"))
             self.app.show_frame(self.app.dashboard_frame)
 
 
@@ -100,6 +100,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.app = app
         self.welcome_label = ctk.CTkLabel(self,text="Welcome")
         self.patient_button = ctk.CTkButton(self,text="Search Patient",command=self.open_patient_frame)
+        self.add_patient_button = ctk.CTkButton(self, text="Register New Patient", command=self.open_add_patient)
         self.appointment_button = ctk.CTkButton(self,text="Manage Appointments",command=self.open_appointment_frame)
         self.recall_button = ctk.CTkButton(self,text="View Recalls",command=self.open_recall_frame)
         self.logout_button = ctk.CTkButton(self,text="Logout",command=self.logout)
@@ -112,19 +113,16 @@ class DashboardFrame(ctk.CTkFrame):
 
 
     def open_patient_frame(self):
-        self.app.show_frame(
-            self.app.patient_frame
-        )
+        self.app.show_frame(self.app.patient_frame)
+
+    def open_add_patient(self):
+        self.app.show_frame(self.app.add_new_patient_frame)
 
     def open_appointment_frame(self):
-        self.app.show_frame(
-            self.app.appointment_frame
-        )
+        self.app.show_frame(self.app.appointment_frame)
 
     def open_recall_frame(self):
-        self.app.show_frame(
-            self.app.recall_frame
-        )
+        self.app.show_frame(self.app.recall_frame)
 
     def logout(self):
 
@@ -150,6 +148,7 @@ class PatientFrame(ctk.CTkFrame):
 
         self.title_label = ctk.CTkLabel(self,text="Patient Management",font=ctk.CTkFont(size=35, weight="bold"))
 
+        self.feedback_label = ctk.CTkLabel(self, text="")
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
         self.search_button = ctk.CTkButton(self.search_frame,text="Search",command=self.search_patient)
 
@@ -186,6 +185,8 @@ class PatientFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.header,text="Phone",width=120).grid(row=0, column=4, padx=5)
 
         self.title_label.pack(pady=20)
+        self.feedback_label.pack()
+
         self.search_frame.pack(fill="x",padx=20,pady=10)
         self.results_title.pack(pady=(5, 0))
         self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
@@ -196,6 +197,7 @@ class PatientFrame(ctk.CTkFrame):
 
 
     def search_patient(self):
+        self.feedback_label.configure(text="")
         name = self.name_entry.get().strip()
         phone = self.phone_entry.get().strip()
         dob = self.dob_entry.get().strip()
@@ -217,7 +219,11 @@ class PatientFrame(ctk.CTkFrame):
             self.create_patient_row(patient)
         self.results_title.configure(text=f"Search Results ({len(results)} found)")
 
-
+    def refreshSearch(self):
+        self.search_patient()
+        self.feedback_label.configure(
+            text="Patient deleted successfully",
+            text_color="green",font=ctk.CTkFont(size=20, weight="bold"))
     def create_patient_row(self, patient):
 
         row = ctk.CTkFrame(self.results_frame)
@@ -236,6 +242,7 @@ class PatientFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.dashboard_frame)
 
+
 class PatientDetailsFrame(ctk.CTkFrame):
 
     def __init__(self, app):
@@ -244,7 +251,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
 
         self.app = app
 
-        self.title_label = ctk.CTkLabel(self, text="Patient Details")
+        self.title_label = ctk.CTkLabel(self, text="Patient Details", font= ctk.CTkFont(size=30, weight="bold"))
         self.firstname_label = ctk.CTkLabel(self, text="First Name")
         self.firstname_entry = ctk.CTkEntry(self)
         self.surname_label = ctk.CTkLabel(self, text="Surname")
@@ -254,10 +261,11 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.phone_label = ctk.CTkLabel(self, text="Phone Number")
         self.phone_entry = ctk.CTkEntry(self)
         self.save_button = ctk.CTkButton(self, text="Save Changes",command=self.saveChanges)
-        self.delete_button = ctk.CTkButton(self, text="Delete Patient")
+        self.delete_button = ctk.CTkButton(self, text="Delete Patient",command=self.deletePatient)
         self.appointment_button = ctk.CTkButton(self, text="Book Appointment")
         self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
         self.feedback_label = ctk.CTkLabel(self, text="")
+
 
         self.title_label.pack(pady=20)
 
@@ -309,11 +317,56 @@ class PatientDetailsFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Database error",text_color="red")
 
 
+    def deletePatient(self):
+        print("deletePatient called")
+        self.confirm_window = ctk.CTkToplevel(self)
+        self.confirm_window.title("Confirm Delete")
+        self.confirm_window.geometry("300x150")
+
+        self.confirm_window.lift()
+        self.confirm_window.focus_force()
+        self.confirm_window.grab_set()
+        self.confirm_window.resizable(False, False)
+
+        ctk.CTkLabel(self.confirm_window, text="Are you sure you want to delete this patient?").pack(pady=20)
+        ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
+        ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
+
+    def confirmDelete(self):
+        success = patients.deletePatient(self.patient_id, self.app.current_user)
+        if success:
+            self.confirm_window.destroy()
+            self.app.patient_frame.refreshSearch()
+            self.app.show_frame(self.app.patient_frame)
+        else:
+            self.feedback_label.configure(text="Error deleting patient", text_color="red")
+
     def back(self):
-        self.feedback_label.pack_forget()
         self.app.show_frame(self.app.patient_frame)
 
+class AddPatientFrame(ctk.CTkFrame):
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        ctk.CTkLabel(self,text="Add Patient").pack(pady=20)
+        self.firstname_label = ctk.CTkLabel(self, text="First Name")
+        self.firstname_entry = ctk.CTkEntry(self)
+        self.surname_label = ctk.CTkLabel(self, text="Surname")
+        self.surname_entry = ctk.CTkEntry(self)
+        self.dob_label = ctk.CTkLabel(self, text="Date Of Birth")
+        self.dob_entry = ctk.CTkEntry(self)
+        self.phone_label = ctk.CTkLabel(self, text="Phone Number")
+        self.phone_entry = ctk.CTkEntry(self)
+        self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
+        self.feedback_label = ctk.CTkLabel(self, text="")
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
+
+
+
+
+    def back(self):
+        self.app.show_frame(self.app.dashboard_frame)
 
 class AppointmentFrame(ctk.CTkFrame):
 
