@@ -149,7 +149,6 @@ class PatientFrame(ctk.CTkFrame):
         self.title_label = ctk.CTkLabel(self,text="Patient Management",font=ctk.CTkFont(size=35, weight="bold"))
 
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
-        self.no_results_label = ctk.CTkLabel(self.results_frame,text="No patients found",text_color="red")
         self.search_button = ctk.CTkButton(self.search_frame,text="Search",command=self.search_patient)
 
         self.name_label = ctk.CTkLabel(self.search_frame,text="Search By Name")
@@ -198,13 +197,19 @@ class PatientFrame(ctk.CTkFrame):
         name = self.name_entry.get().strip()
         phone = self.phone_entry.get().strip()
         dob = self.dob_entry.get().strip()
+
         results = patients.search_patients(name=name,phone=phone,dob=dob)
+        if results == "INVALID_DATE":
+            self.results_title.configure(text="Date must be DD/MM/YYYY")
+
+            return
+
         for w in self.results_frame.winfo_children():
             if w != self.header:
                 w.destroy()
-        self.no_results_label.pack_forget()
         if not results:
-            self.no_results_label.pack(pady=10)
+            no_results_label = ctk.CTkLabel(self.results_frame,text="No patients found",text_color="red")
+            no_results_label.pack(pady=10)
             return
         for patient in results:
             self.create_patient_row(patient)

@@ -102,16 +102,20 @@ def _validatePhoneNUM():
     return phone
 
 def search_patients(name="", phone="", dob=""):
+    from datetime import datetime
     query = """
         SELECT *
         FROM Patients_Table
         WHERE 1=1
     """
     params = []
+
     if name:
         query += """
-            AND (FirstName LIKE ?
-            OR Surname LIKE ?)
+            AND (
+                FirstName LIKE ?
+                OR Surname LIKE ?
+            )
         """
         params.extend([
             f"%{name}%",
@@ -123,6 +127,13 @@ def search_patients(name="", phone="", dob=""):
         """
         params.append(f"%{phone}%")
     if dob:
+        try:
+            dob = datetime.strptime(
+                dob,
+                "%d/%m/%Y"
+            ).strftime("%Y-%m-%d")
+        except ValueError:
+            return "INVALID_DATE"
         query += """
             AND Date_of_birth = ?
         """
@@ -131,86 +142,6 @@ def search_patients(name="", phone="", dob=""):
     return cursor.fetchall()
 
 
-
-def searchName(name):
-
-    searchPattern = "%" + name + "%"
-
-    cursor.execute("""
-        SELECT *
-        FROM Patients_Table
-        WHERE FirstName LIKE ?
-        OR Surname LIKE ?
-    """, (searchPattern, searchPattern))
-
-    return cursor.fetchall()
-
-
-def searchPhone():
-    phone = input("Enter phone number: ").strip()
-    phone = phone.replace(" ", "")
-    searchPattern = (phone + "%")
-    if len(phone) > 2 and len(phone) < 11:
-        cursor.execute("""
-        SELECT * FROM Patients_Table
-            WHERE Phone_Num LIKE ?
-            """, (searchPattern,))
-    else:
-        cursor.execute("""
-            SELECT *
-            FROM Patients_Table
-            WHERE Phone_Num = ?
-            """, (phone,))
-    results = cursor.fetchall()
-    return fetchQueryResults(results)
-
-def searchDOB():
-    choice = int(input("Do you want to:\n"
-                   "1. Search specific year\n"
-                   "2. Search specific month (not ready)\n"
-                   "3. Search specific day (not ready)\n"
-                   "4. Search a range of dates (not ready)\n"
-                   "5. Search specific date\n"
-                   ">>  "))
-    if choice == 1:
-        year = int(input("Enter year:  "))
-        if 1800 < year < 2026:
-            searchPattern = str(year) + "%"
-            cursor.execute("""
-                SELECT *
-                FROM Patients_Table
-                WHERE Date_of_birth LIKE ?
-                """, (searchPattern,))
-            results = cursor.fetchall()
-            return fetchQueryResults(results)
-
-
-def fetchQueryResults(results):
-    valid_ids = []
-    if len(results) == 0:
-        print("No patients found")
-    else:
-        for p in results:
-            print(f"ID: {p[0]}"
-                  f" | Name: {p[1]} {p[2]}"
-                  f" | DOB: {p[3]}"
-                  f" | Phone: {p[4]}")
-            valid_ids.append(p[0])
-        chosenID = selectPatient(results,valid_ids)
-        return chosenID
-
-def selectPatient(results,valid_ids):
-    valid = False
-    while not valid:
-        try:
-            chosenID = int(input("Enter ID of chosen patient:  "))
-            if chosenID in valid_ids:
-                return chosenID
-
-            else:
-                print("Not present")
-        except ValueError:
-            print("Invalid Input")
 
 
 def get_patient_by_id(patient_id):
@@ -221,32 +152,6 @@ def get_patient_by_id(patient_id):
     """, (patient_id,))
     return cursor.fetchone()
 
-def patientmanagementwindow(chosenID, staff_username):
-    valid = False
-    while not valid:
-        try:
-            choice = int(input("Do you want to:\n\n"
-                               "1. Edit this patient\n"
-                               "2. Delete Patient\n"
-                               "3. Book an appointment\n"
-                               "4. Exit patient manager\n\n"
-                               ">>  "))
-            if choice == 1:
-                editPatientMenu(chosenID, staff_username)
-                valid = True
-            elif choice == 2:
-                successful = deletePatient(chosenID, staff_username)
-                if successful == True:
-                    valid = True
-            elif choice == 3:
-                appointments.bookAppointment(chosenID, staff_username)
-
-            elif choice == 4:
-                valid = True
-
-
-        except ValueError:
-            print("Invalid Input")
 
 def deletePatient(patientID, current_user):
     confirm = input("Are you sure?\n\n>> ").strip().lower()
@@ -266,26 +171,6 @@ def deletePatient(patientID, current_user):
 
 
 
-def editPatientMenu(patientID, current_user):
-    valid = False
-    while valid == False:
-        try:
-            choice = int(input("Select which field you would like to edit\n"
-                               "1. Name\n"
-                               "2. Date of Birth\n"
-                               "3. Phone Number\n"
-                               "4. Exit editing\n\n"
-                               ">>  "))
-            if choice == 1:
-                editName(patientID, current_user)
-            elif choice == 2:
-                editDOB(patientID, current_user)
-            elif choice == 3:
-                editPhone(patientID, current_user)
-            elif choice == 4:
-                valid = True
-        except ValueError:
-            print("Incorrect datatype")
 
 def editName(patientID, current_user):
     firstname, surname = _validateFNandSN()
