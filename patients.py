@@ -11,7 +11,7 @@ def enterpatientdetails(current_user):
     attempts = 0
     while confirm == False and attempts < 5:
         firstname, surname = _validateFNandSN()
-        date_of_birth = _validateDOB()
+        date_of_birth = validateDOB()
         phonenum = _validatePhoneNUM()
         print("\nYou entered:\nName:", firstname, surname,
               "\nDOB:", date_of_birth,
@@ -47,59 +47,32 @@ def enterpatientdetails(current_user):
     except Exception as e:
         print(f"Database error: {e}")
 
-def _validateFNandSN():
-    valid = False
-    while not valid:
-        pattern = r"^[A-Za-z'-]+$"
-        firstname = input("Enter firstname: ").strip().capitalize()
-        surname = input("Enter surname: ").strip().capitalize()
-        #makes sure not empty
-        if len(firstname) == 0 or len(surname) == 0:
-            print("Name too short")
-        #allows apostrophes and hyphens in names
-        elif not re.match(pattern,firstname) or not re.match(pattern, surname):
-            print("Name must not contain numbers or symbols")
-        else:
-            valid = True
-    return firstname,surname
+def validateFNandSN(firstname, surname):
+    pattern = r"^[A-Za-z'-]+$"
+    if len(firstname) == 0 or len(surname) == 0:
+        return False
+    if not re.match(pattern, firstname):
+        return False
+    if not re.match(pattern, surname):
+        return False
+    return True
 
-def _validateDOB():
-    valid = False
-    formats = ["%d/%m/%Y","%d-%m-%Y","%d %m %Y","%d.%m.%Y"]
-    while not valid:
-        date_of_birth = input("Enter date of birth (DD/MM/YYYY): ").strip()
-        date = 0
-        for x in formats:
-            try:
-                today = datetime.today()
-                date = datetime.strptime(date_of_birth, x)
-                if date > today:
-                    print("Cannot be in future")
-                else:
-                    valid = True
-                    break
-
-            except ValueError:
-                continue
-        if valid:
-            return date.strftime("%Y-%m-%d")
-        else:
-            print("Error, incorrect format. Try DD/MM/YYYY")
+def validateDOB(dob):
+    try:
+        date = datetime.strptime(dob,"%d/%m/%Y")
+        if date > datetime.today():
+            return False
+        return True
+    except ValueError:
+        return False
 
 
-def _validatePhoneNUM():
-    valid = False
-    while not valid:
-        phone = input("Enter phone number: ").strip()
-        phone = phone.replace(" ", "")
-        # validates format using regex
-        pattern = r"^(07\d{9}|\+44\d{10})$"
-        if re.match(pattern, phone):
-            phone = re.sub(r"^\+44", "0", phone)
-            valid = True
-        else:
-            print("Wrong format. Try 07XXXXXXXXX or +44XXXXXXXXXX")
-    return phone
+def validatePhoneNUM(phone):
+    phone = phone.replace(" ", "")
+    pattern = r"^(07\d{9}|\+44\d{10})$"
+    if re.match(pattern, phone):
+        return True
+    return False
 
 def search_patients(name="", phone="", dob=""):
     from datetime import datetime
@@ -190,28 +163,37 @@ def editName(patientID, current_user):
     except:
         print("Database Error")
 
-
-def editDOB(patientID, current_user):
-    dob = _validateDOB()
+def updatePatient(patientID, firstname, surname, dob, phone, current_user):
+    if not validateFNandSN(firstname, surname):
+        return "INVALID_NAME"
+    if not validateDOB(dob):
+        return "INVALID_DOB"
+    dob = datetime.strptime(dob,"%d/%m/%Y").strftime("%Y-%m-%d")
+    if not validatePhoneNUM(phone):
+        return "INVALID_PHONE"
     try:
         cursor.execute("""
-        UPDATE Patients_Table
-        SET Date_of_birth = ?
-        WHERE PatientID = ?
-        """, (dob,patientID))
+            UPDATE Patients_Table
+            SET
+                FirstName = ?,
+                Surname = ?,
+                Date_of_birth = ?,
+                Phone_Num = ?
+            WHERE PatientID = ?
+        """, (firstname, surname, dob, phone, patientID))
         connect.commit()
         Logging.log_action(
             current_user,
-            "EDIT_PATIENT_DOB",
-            f"PatientID {patientID}"
-        )
-        print("Patient updated successfully")
+            "EDIT_PATIENT",
+            f"PatientID {patientID}")
+        return "SUCCESS"
     except:
-        print("Database Error")
+        return "DATABASE_ERROR"
+
 
 
 def editPhone(patientID, current_user):
-    phone = _validatePhoneNUM()
+    phone = validatePhoneNUM()
     try:
         cursor.execute("""
         UPDATE Patients_Table

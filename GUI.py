@@ -55,6 +55,7 @@ class LoginFrame(ctk.CTkFrame):
         self.error_label = ctk.CTkLabel(self,text="Username or password is incorrect",text_color="red")
         self.locked_label = ctk.CTkLabel(self,text="Too many attempts. Restart application",text_color="red")
 
+
         self.username_entry.pack(pady=10)
         self.password_entry.pack(pady=10)
         self.login_button.pack(pady=10)
@@ -84,6 +85,7 @@ class LoginFrame(ctk.CTkFrame):
 
         else:
             staff_id, role, username = result
+            self.app.current_user = username
             self.app.attempts = 0
             self.app.dashboard_frame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}")
             self.app.show_frame(self.app.dashboard_frame)
@@ -251,10 +253,11 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.dob_entry = ctk.CTkEntry(self)
         self.phone_label = ctk.CTkLabel(self, text="Phone Number")
         self.phone_entry = ctk.CTkEntry(self)
-        self.save_button = ctk.CTkButton(self, text="Save Changes")
+        self.save_button = ctk.CTkButton(self, text="Save Changes",command=self.saveChanges)
         self.delete_button = ctk.CTkButton(self, text="Delete Patient")
         self.appointment_button = ctk.CTkButton(self, text="Book Appointment")
         self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
+        self.feedback_label = ctk.CTkLabel(self, text="")
 
         self.title_label.pack(pady=20)
 
@@ -269,10 +272,12 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.save_button.pack(pady=5)
         self.delete_button.pack(pady=5)
         self.appointment_button.pack(pady=5)
+        self.feedback_label.pack(pady=5)
 
         self.back_button.pack(pady=20)
 
     def load_patient(self, patient_id):
+        from datetime import datetime
         self.patient_id = patient_id
         patient = patients.get_patient_by_id(patient_id)
         self.firstname_entry.delete(0, "end")
@@ -280,13 +285,32 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.surname_entry.delete(0, "end")
         self.surname_entry.insert(0, patient[2])
         self.dob_entry.delete(0, "end")
-        self.dob_entry.insert(0, patient[3])
+        dob = datetime.strptime(patient[3],"%Y-%m-%d").strftime("%d/%m/%Y")
+        self.dob_entry.insert(0, dob)
         self.phone_entry.delete(0, "end")
         self.phone_entry.insert(0, patient[4])
 
-    #def saveChanges(self,patientID):
+    def saveChanges(self):
+        firstname = self.firstname_entry.get().strip()
+        surname = self.surname_entry.get().strip()
+        dob = self.dob_entry.get().strip()
+        phone = self.phone_entry.get().strip()
+        result = patients.updatePatient(self.patient_id,firstname,surname,dob,phone,self.app.current_user)
+
+        if result == "SUCCESS":
+            self.feedback_label.configure(text="Patient updated successfully",text_color="green")
+        elif result == "INVALID_NAME":
+            self.feedback_label.configure(text="Invalid first name or surname",text_color="red")
+        elif result == "INVALID_DOB":
+            self.feedback_label.configure(text="Date must be DD/MM/YYYY",text_color="red")
+        elif result == "INVALID_PHONE":
+            self.feedback_label.configure(text="Phone number format is invalid",text_color="red")
+        else:
+            self.feedback_label.configure(text="Database error",text_color="red")
+
 
     def back(self):
+        self.feedback_label.pack_forget()
         self.app.show_frame(self.app.patient_frame)
 
 
