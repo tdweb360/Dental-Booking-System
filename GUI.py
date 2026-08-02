@@ -237,30 +237,59 @@ class PatientFrame(ctk.CTkFrame):
 class PatientDetailsFrame(ctk.CTkFrame):
 
     def __init__(self, app):
+
         super().__init__(app)
+
         self.app = app
-        self.title_label = ctk.CTkLabel(self,text="Patient Details")
-        self.patient_info = ctk.CTkLabel(self,text="")
+
+        self.title_label = ctk.CTkLabel(self, text="Patient Details")
+        self.firstname_label = ctk.CTkLabel(self, text="First Name")
+        self.firstname_entry = ctk.CTkEntry(self)
+        self.surname_label = ctk.CTkLabel(self, text="Surname")
+        self.surname_entry = ctk.CTkEntry(self)
+        self.dob_label = ctk.CTkLabel(self, text="Date Of Birth")
+        self.dob_entry = ctk.CTkEntry(self)
+        self.phone_label = ctk.CTkLabel(self, text="Phone Number")
+        self.phone_entry = ctk.CTkEntry(self)
+        self.save_button = ctk.CTkButton(self, text="Save Changes")
+        self.delete_button = ctk.CTkButton(self, text="Delete Patient")
+        self.appointment_button = ctk.CTkButton(self, text="Book Appointment")
+        self.back_button = ctk.CTkButton(self, text="Back", command=self.back)
 
         self.title_label.pack(pady=20)
-        self.patient_info.pack(pady=20)
+
+        self.firstname_label.pack()
+        self.firstname_entry.pack(pady=5)
+        self.surname_label.pack()
+        self.surname_entry.pack(pady=5)
+        self.dob_label.pack()
+        self.dob_entry.pack(pady=5)
+        self.phone_label.pack()
+        self.phone_entry.pack(pady=5)
+        self.save_button.pack(pady=5)
+        self.delete_button.pack(pady=5)
+        self.appointment_button.pack(pady=5)
+
+        self.back_button.pack(pady=20)
 
     def load_patient(self, patient_id):
-        patient = patients.get_patient_by_id(
-            patient_id
-        )
+        self.patient_id = patient_id
+        patient = patients.get_patient_by_id(patient_id)
+        self.firstname_entry.delete(0, "end")
+        self.firstname_entry.insert(0, patient[1])
+        self.surname_entry.delete(0, "end")
+        self.surname_entry.insert(0, patient[2])
+        self.dob_entry.delete(0, "end")
+        self.dob_entry.insert(0, patient[3])
+        self.phone_entry.delete(0, "end")
+        self.phone_entry.insert(0, patient[4])
 
-        self.patient_info.configure(
-            text=f"""
-                ID: {patient[0]}
-                Name: {patient[1]} {patient[2]}
-                DOB: {patient[3]}
-                Phone: {patient[4]}
-                """
-                    )
+    #def saveChanges(self,patientID):
 
     def back(self):
         self.app.show_frame(self.app.patient_frame)
+
+
 
 class AppointmentFrame(ctk.CTkFrame):
 
@@ -272,6 +301,9 @@ class AppointmentFrame(ctk.CTkFrame):
 
     def back(self):
         self.app.show_frame(self.app.dashboard_frame)
+
+
+
 
 class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
