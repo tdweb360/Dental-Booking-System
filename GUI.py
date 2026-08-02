@@ -441,14 +441,32 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.patient_label.configure(text=f"{patient[1]} {patient[2]}")
 
     def checkDay(self):
+        all_slots = [
+    "09:00","09:15","09:30","09:45",
+    "10:00","10:15","10:30","10:45",
+    "11:00","11:15","11:30","11:45",
+    "12:00","12:15","12:30","12:45",
+    "13:00","13:15","13:30","13:45",
+    "14:00","14:15","14:30","14:45",
+    "15:00","15:15","15:30","15:45",
+    "16:00","16:15","16:30","16:45"
+        ]
+        for w in self.results_frame.winfo_children():
+            w.destroy()
         date = self.date_entry.get().strip()
         if not appointments.validateAppointmentDate(date):
             self.feedback_label.configure(text="Invalid date", text_color="red")
             return
         self.feedback_label.configure(text="")
         results = appointments.getAppointmentsByDate(date)
-        print(results)
-
+        booked_slots = []
+        for appointment in results:
+            booked_slots.append(appointment[0])
+        available_slots = []
+        for slot in all_slots:
+            if slot not in booked_slots:
+                available_slots.append(slot)
+        print("Available:", available_slots)
 
 
     def createAppointment(patientID, date, time):
