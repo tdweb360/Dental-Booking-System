@@ -413,61 +413,108 @@ class AddPatientFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.dashboard_frame)
 
 class BookAppointmentFrame(ctk.CTkFrame):
+
     def __init__(self, app):
 
         super().__init__(app)
 
         self.app = app
+        self.selected_slot = None
 
         ctk.CTkLabel(self, text="Book Appointment", font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
 
-        self.patient_label = ctk.CTkLabel(self, text="")
+        self.patient_label = ctk.CTkLabel(self, text="",font=ctk.CTkFont(size=15))
         self.date_entry = ctk.CTkEntry(self, placeholder_text="DD/MM/YYYY")
+        self.duration_menu = ctk.CTkOptionMenu(self, values=["15", "30", "45", "60"])
         self.search_button = ctk.CTkButton(self, text="Check Availability", command=self.checkDay)
-        self.results_frame = ctk.CTkScrollableFrame(self)
         self.feedback_label = ctk.CTkLabel(self, text="")
+        self.results_frame = ctk.CTkScrollableFrame(self, width=300, height=250)
+        self.selected_slot_label = ctk.CTkLabel(self, text="Selected Slot: None")
+        self.book_button = ctk.CTkButton(self, text="Book Appointment", command=self.bookAppointment)
+
 
         self.patient_label.pack()
-        self.date_entry.pack()
-        self.search_button.pack()
+        self.date_entry.pack(pady=5)
+        self.duration_menu.pack(pady=5)
+        self.search_button.pack(pady=5)
         self.feedback_label.pack()
-        self.results_frame.pack()
+        self.results_frame.pack(pady=5)
+        self.selected_slot_label.pack()
+        self.book_button.pack(pady=7)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(padx=20)
 
     def loadPatient(self, patient_id):
         self.patient_id = patient_id
-
         patient = patients.get_patient_by_id(patient_id)
-
         self.patient_label.configure(text=f"{patient[1]} {patient[2]}")
 
+    def chooseSlot(self, slot):
+        self.selected_slot = slot
+        self.selected_slot_label.configure(
+            text=f"Selected Slot: {slot}")
+
     def checkDay(self):
+        from datetime import datetime, timedelta
+
         all_slots = [
-    "09:00","09:15","09:30","09:45",
-    "10:00","10:15","10:30","10:45",
-    "11:00","11:15","11:30","11:45",
-    "12:00","12:15","12:30","12:45",
-    "13:00","13:15","13:30","13:45",
-    "14:00","14:15","14:30","14:45",
-    "15:00","15:15","15:30","15:45",
-    "16:00","16:15","16:30","16:45"
+            "09:00","09:15","09:30","09:45",
+            "10:00","10:15","10:30","10:45",
+            "11:00","11:15","11:30","11:45",
+            "12:00","12:15","12:30","12:45",
+            "13:00","13:15","13:30","13:45",
+            "14:00","14:15","14:30","14:45",
+            "15:00","15:15","15:30","15:45",
+            "16:00","16:15","16:30","16:45"
         ]
         for w in self.results_frame.winfo_children():
             w.destroy()
         date = self.date_entry.get().strip()
         if not appointments.validateAppointmentDate(date):
-            self.feedback_label.configure(text="Invalid date", text_color="red")
+
+            self.feedback_label.configure(
+                text="Invalid date",
+                text_color="red"
+            )
             return
         self.feedback_label.configure(text="")
         results = appointments.getAppointmentsByDate(date)
         booked_slots = []
         for appointment in results:
-            booked_slots.append(appointment[0])
-        available_slots = []
-        for slot in all_slots:
-            if slot not in booked_slots:
-                available_slots.append(slot)
-        print("Available:", available_slots)
+            start_time = datetime.strptime(appointment[0],"%H:%M")
+            duration = appointment[1]
+            slots_needed = duration // 15
+            for i in range(slots_needed):
+                slot_time = start_time + timedelta(minutes=i * 15)
 
+                booked_slots.append(slot_time.strftime("%H:%M"))
+        ctk.CTkLabel(self.results_frame,text="Time        Status",font=ctk.CTkFont(size=16, weight="bold")).pack(pady=5)
+
+        for slot in all_slots:
+            if slot in booked_slots:
+                ctk.CTkLabel(self.results_frame,text=f"{slot}    BOOKED",text_color="red").pack(pady=2)
+            else:
+                button = ctk.CTkButton(self.results_frame,text=f"{slot}    AVAILABLE",fg_color="green",command=lambda s=slot: self.chooseSlot(s))
+                button.pack(pady=2)
+
+    def bookAppointment(self):
+        if self.selected_slot is None:
+            self.feedback_label.configure(text="Select a slot first",text_color="red")
+            return
+        date = self.date_entry.get().strip()
+        print(self.patient_id)
+        print(date)
+        print(self.selected_slot)
+
+    def back(self):
+        self.app.show_frame(self.app.dashboard_frame)
+
+class ManageAppointmentFrame(ctk.CTkFrame):
+
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        ctk.CTkLabel(self,text="Appointment Management").pack(pady=20)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
     def createAppointment(patientID, date, time):
         pass
@@ -477,14 +524,6 @@ class BookAppointmentFrame(ctk.CTkFrame):
         pass
     def updateAppointment(appointmentID, date, time):
         pass
-
-class ManageAppointmentFrame(ctk.CTkFrame):
-
-    def __init__(self, app):
-        super().__init__(app)
-        self.app = app
-        ctk.CTkLabel(self,text="Appointment Management").pack(pady=20)
-        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
     def back(self):
         self.app.show_frame(self.app.dashboard_frame)
