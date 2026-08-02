@@ -396,7 +396,7 @@ class AddPatientFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Phone number format is invalid", text_color="red")
         else:
             self.feedback_label.configure(text="Database error", text_color="red")
-
+#
     def clearFields(self):
         self.firstname_entry.delete(0, "end")
         self.surname_entry.delete(0, "end")
