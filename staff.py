@@ -3,6 +3,8 @@ import sqlite3
 import re
 import bcrypt
 import Logging
+from patients import validateFNandSN
+
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
@@ -48,51 +50,72 @@ def addStaff(current_user):
     except:
         print("database error")
 
-def createUsername():
-    valid = False
+def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
+    if not patients.validateFNandSN(firstname, surname):
+        return "INVALID FIRST NAME OR SURNAME"
+    if not createUsername(username):
+        return "INVALID USERNAME"
+    passresult = createPass(password,pass2)
+    if passresult != "VALID":
+        return passresult
+
+    hashed_pass = hashpass(password)
+    try:
+        cursor.execute("""
+        INSERT INTO Staff_Table (FirstName, Surname, Username, Password_Hash, Staff_Role) 
+        VALUES (?,?,?,?,?)
+            """, (firstname, surname, username, hashed_pass, role,))
+        connect.commit()
+        cursor.execute("""
+        SELECT last_insert_rowid()
+        """)
+        staffID = cursor.fetchone()[0]
+        Logging.log_action(
+            current_user,
+            "CREATE_STAFF",
+            f"StaffID {staffID}, Username {username}"
+        )
+
+        return "SUCCESS"
+    except:
+        return "DATABASE ERROR"
+
+def createUsername(username):
+
     pattern = r"^[A-Za-z0-9._]+$"
-    while not valid:
-        username = input("Enter username (Special characters: . _ ): ")
-        if not(4 <= len(username) <= 20):
-            print("Wrong length")
-        elif not(re.match(pattern,username)):
-            print("These special characters are not allowed")
+
+    if not(4 <= len(username) <= 20):
+        return False
+    elif not(re.match(pattern,username)):
+        return False
+    else:
+        cursor.execute("""
+            SELECT Username
+            FROM Staff_Table
+            WHERE Username = ?
+            """, (username,))
+
+        result = cursor.fetchone()
+
+        if result:
+            return False
         else:
-            cursor.execute("""
-                SELECT Username
-                FROM Staff_Table
-                WHERE Username = ?
-                """, (username,))
+            return username
 
-            result = cursor.fetchone()
-
-            if result:
-                print("User already exists")
-            else:
-                valid = True
-    return username
-
-def createPass():
-    valid = False
-    while not valid:
-        password = input("Enter password: ")
-        if len(password) < 8:
-            print("Password must be at least 8 characters")
-        elif not re.search(r"[A-Z]", password):
-            print("Password must contain an uppercase letter")
-        elif not re.search(r"[a-z]", password):
-            print("Password must contain a lowercase letter")
-        elif not re.search(r"\d", password):
-            print("Password must contain a number")
-        elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            print("Password must contain a special character")
-        else:
-            confirmPassword = input("Confirm password: ")
-            if password != confirmPassword:
-                print("Passwords do not match")
-            else:
-                valid = True
-    return password
+def createPass(password, pass2):
+    if len(password) < 8:
+        return "PASSWORD_LENGTH"
+    elif not re.search(r"[A-Z]", password):
+        return "PASSWORD_UPPERCASE"
+    elif not re.search(r"[a-z]", password):
+        return "PASSWORD_LOWERCASE"
+    elif not re.search(r"\d", password):
+        return "PASSWORD_NUMBER"
+    elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return "PASSWORD_SPECIAL"
+    elif password != pass2:
+        return "PASSWORD_MATCH"
+    return "VALID"
 
 
 def roleselect():
@@ -287,37 +310,20 @@ def changeRole(staffID, current_user):
         except:
             print("Database error")
 
-def deleteStaff(staffID,current_user):
-    confirm = input("Are you sure? ").strip().lower()
-    if confirm in ["yes", "y"]:
-        try:
-            cursor.execute("""
-            SELECT Username
-            FROM Staff_Table
-            WHERE StaffID = ?
-            """, (staffID,))
-            result = cursor.fetchone()
-            if result is None:
-                print("Staff member not found")
-                return False
-
-            cursor.execute("""
-            DELETE FROM Staff_Table
-            WHERE StaffID = ?
-            """, (staffID,))
-
-            connect.commit()
-            Logging.log_action(
-                current_user,
-                "DELETE_STAFF",
-                f"StaffID {staffID}, Username {result[0]}"
-            )
-            print("Staff member deleted")
-
-            return True
-        except:
-            print("Database error")
-    return False
+def deleteStaff(staffID, current_user):
+    try:
+        cursor.execute("""
+        DELETE FROM Staff_Table
+        WHERE StaffID = ?
+        """,(staffID,))
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "DELETE_STAFF",
+            f"StaffID {staffID}")
+        return "SUCCESS"
+    except:
+        return "DATABASE_ERROR"
 
 def searchStaff():
     valid = False
@@ -424,3 +430,22 @@ def selectStaff(valid_ids):
                 print("Not present")
         except ValueError:
             print("Invalid Input")
+
+def getStaffByID(staffID):
+    cursor.execute("""
+    SELECT *
+    FROM Staff_Table
+    WHERE StaffID = ?
+    """,(staffID,))
+    return cursor.fetchone()
+
+
+def searchStaffName(name):
+    searchPattern = f"%{name}%"
+    cursor.execute("""
+    SELECT *
+    FROM Staff_Table
+    WHERE FirstName LIKE ?
+    OR Surname LIKE ?
+    """,(searchPattern, searchPattern))
+    return cursor.fetchall()

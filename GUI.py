@@ -25,6 +25,8 @@ class App(ctk.CTk):
         self.manageAppointment_Frame = ManageAppointmentFrame(self)
         self.new_appointment_frame = BookAppointmentFrame(self)
         self.appointmentDetails_frame = AppointmentDetailsFrame(self)
+        self.staff_frame = StaffManagementFrame(self)
+        self.staffDetails_frame = StaffDetailsFrame(self)
         self.recall_frame = RecallFrame(self)
 
 
@@ -38,6 +40,8 @@ class App(ctk.CTk):
             self.manageAppointment_Frame,
             self.new_appointment_frame,
             self.appointmentDetails_frame,
+            self.staff_frame,
+            self.staffDetails_frame,
             self.recall_frame
         ]
 
@@ -92,6 +96,11 @@ class LoginFrame(ctk.CTkFrame):
 
         else:
             staff_id, role, username = result
+            self.app.current_role = role
+            if role == "Manager":
+                self.app.dashboardFrame.staff_button.pack(pady=10)
+            else:
+                self.app.dashboardFrame.staff_button.pack_forget()
             self.app.current_user = username
             self.app.attempts = 0
             self.app.dashboardFrame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}",font= ctk.CTkFont(size=30, weight="bold"))
@@ -110,6 +119,8 @@ class DashboardFrame(ctk.CTkFrame):
         self.add_patient_button = ctk.CTkButton(self, text="Register New Patient", command=self.open_add_patient)
         self.appointment_button = ctk.CTkButton(self,text="Manage Appointments",command=self.open_appointment_frame)
         self.recall_button = ctk.CTkButton(self,text="View Recalls",command=self.open_recall_frame)
+        self.staff_button = ctk.CTkButton(self,text="Staff Management",command=self.open_staff_frame)
+
         self.logout_button = ctk.CTkButton(self,text="Logout",command=self.logout)
 
         self.welcome_label.pack(pady=20)
@@ -128,6 +139,9 @@ class DashboardFrame(ctk.CTkFrame):
 
     def open_appointment_frame(self):
         self.app.show_frame(self.app.manageAppointment_Frame)
+
+    def open_staff_frame(self):
+        self.app.show_frame(self.app.staff_frame)
 
     def open_recall_frame(self):
         self.app.show_frame(self.app.recall_frame)
@@ -726,6 +740,148 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.manageAppointment_Frame)
 
+class StaffManagementFrame(ctk.CTkFrame):
+
+    def __init__(self, app):
+
+        super().__init__(app)
+        self.app = app
+        ctk.CTkLabel(self,text="Staff Management",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+        self.search_entry = ctk.CTkEntry(self,placeholder_text="Search name")
+        self.search_entry.pack()
+        ctk.CTkButton(self,text="Search",command=self.searchStaff).pack()
+        self.results_frame = ctk.CTkScrollableFrame(self,width=800,height=500)
+        self.results_frame.pack(fill="both", expand=True)
+
+        self.firstname_entry = ctk.CTkEntry(self,placeholder_text="First name")
+        self.surname_entry = ctk.CTkEntry(self,placeholder_text="Surname")
+        self.username_entry = ctk.CTkEntry(self,placeholder_text="Username")
+        self.password_entry = ctk.CTkEntry(self,placeholder_text="Password",show="*")
+        self.reenter_password_entry = ctk.CTkEntry(self,placeholder_text="Re-enter Password",show= "*")
+        self.role_menu = ctk.CTkOptionMenu(self,values=["Dentist","Receptionist","Manager"])
+        self.register_button = ctk.CTkButton(self,text="Register", command=self.registerStaffMember)
+        self.feedback_label = ctk.CTkLabel(self,text="")
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+
+
+
+        self.firstname_entry.pack(pady=10)
+        self.surname_entry.pack(pady=10)
+        self.username_entry.pack(pady=10)
+        self.password_entry.pack(pady=10)
+        self.reenter_password_entry.pack(pady=10)
+        self.role_menu.pack(pady=10)
+        self.register_button.pack(pady=10)
+        self.feedback_label.pack(pady=5)
+        self.back_button.pack(pady=5)
+
+
+    def registerStaffMember(self):
+        firstN = self.firstname_entry.get().strip()
+        surN = self.surname_entry.get().strip()
+        username = self.username_entry.get().strip()
+        password = self.password_entry.get().strip()
+        renterPass = self.reenter_password_entry.get().strip()
+        role = self.role_menu.get()
+        result = staff.addStaffGUI(firstN,surN,username,password,renterPass,role,self.app.current_user)
+        if result == "SUCCESS":
+            self.feedback_label.configure(text="Staff member registered successfully",text_color="green")
+            self.clearFields()
+        elif result == "INVALID FIRST NAME OR SURNAME":
+            self.feedback_label.configure(text="Invalid first name or surname",text_color="red")
+        elif result == "INVALID USERNAME":
+            self.feedback_label.configure(text="Invalid or duplicate username",text_color="red")
+        elif result == "PASSWORD_LENGTH":
+            self.feedback_label.configure(text="Password must be at least 8 characters",text_color="red")
+        elif result == "PASSWORD_UPPERCASE":
+            self.feedback_label.configure(text="Password must contain an uppercase letter",text_color="red")
+        elif result == "PASSWORD_LOWERCASE":
+            self.feedback_label.configure(text="Password must contain a lowercase letter",text_color="red")
+        elif result == "PASSWORD_NUMBER":
+            self.feedback_label.configure(text="Password must contain a number",text_color="red")
+        elif result == "PASSWORD_SPECIAL":
+            self.feedback_label.configure(text="Password must contain a special character",text_color="red")
+        elif result == "PASSWORD_MATCH":
+            self.feedback_label.configure(text="Passwords do not match",text_color="red")
+        else:
+            self.feedback_label.configure(text="Database error",text_color="red")
+
+    def clearFields(self):
+
+        self.firstname_entry.delete(0, "end")
+        self.surname_entry.delete(0, "end")
+        self.username_entry.delete(0, "end")
+        self.password_entry.delete(0, "end")
+        self.reenter_password_entry.delete(0, "end")
+
+        self.role_menu.set("Dentist")
+
+    def searchStaff(self):
+        for widget in self.results_frame.winfo_children():
+            widget.destroy()
+        name = self.search_entry.get().strip()
+        results = staff.searchStaffName(name)
+        if len(results) == 0:
+            ctk.CTkLabel(self.results_frame,text="No staff members found",text_color="red").pack()
+            return
+
+        from functools import partial
+
+        for member in results:
+            row = ctk.CTkFrame(self.results_frame)
+            row.pack(fill="x", pady=2)
+            ctk.CTkLabel(row,text=f"{member[1]} {member[2]}").pack(side="left", padx=10)
+            ctk.CTkLabel(row,text=member[3]).pack(side="left", padx=10)
+            ctk.CTkLabel(row,text=member[5]).pack(side="left", padx=10)
+            ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member[0])).pack(side="right", padx=10)
+
+    def openStaff(self, staffID):
+        self.app.staffDetails_frame.loadStaff(staffID)
+        self.app.show_frame( self.app.staffDetails_frame)
+
+    def back(self):
+        self.app.show_frame(self.app.dashboardFrame)
+
+
+class StaffDetailsFrame(ctk.CTkFrame):
+
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        ctk.CTkLabel(self,text="Staff Details",font=ctk.CTkFont(size=30,weight="bold")).pack(pady=20)
+        self.firstname_entry = ctk.CTkEntry(self)
+        self.firstname_entry.pack()
+        self.surname_entry = ctk.CTkEntry(self)
+        self.surname_entry.pack()
+        self.username_entry = ctk.CTkEntry(self)
+        self.username_entry.pack()
+        self.role_menu = ctk.CTkOptionMenu(self,values=["Dentist","Receptionist","Manager"])
+        self.role_menu.pack()
+        ctk.CTkButton(self,text="Save",command=self.saveChanges).pack(pady=5)
+        ctk.CTkButton(self,text="Delete Staff",command=self.deleteStaff).pack(pady=5)
+        ctk.CTkButton(self,text="Reset Password",command=self.resetPassword).pack(pady=5)
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+        self.back_button.pack(pady=10)
+
+    def loadStaff(self, staffID):
+        self.staffID = staffID
+        member = staff.getStaffByID(staffID)
+        self.firstname_entry.delete(0, "end")
+        self.firstname_entry.insert(0, member[1])
+        self.surname_entry.delete(0, "end")
+        self.surname_entry.insert(0, member[2])
+        self.username_entry.delete(0, "end")
+        self.username_entry.insert(0, member[3])
+        self.role_menu.set(member[5])
+
+
+
+
+
+    def back(self):
+        self.app.show_frame(
+            self.app.staff_frame
+        )
 
 class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
