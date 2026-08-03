@@ -4,7 +4,7 @@ import appointments
 import authentication
 import Logging
 import patients
-
+from datetime import datetime
 class App(ctk.CTk):
 
     def __init__(self):
@@ -15,33 +15,33 @@ class App(ctk.CTk):
 
         self.attempts = 0
 
-        self.login_frame = LoginFrame(self)
+        self.loginFrame = LoginFrame(self)
 
-        self.dashboard_frame = DashboardFrame(self)
+        self.dashboardFrame = DashboardFrame(self)
 
         self.patient_frame = PatientFrame(self)
-        self.patient_details_frame = PatientDetailsFrame(self)
+        self.patientDetails_frame = PatientDetailsFrame(self)
         self.add_patient_frame = AddPatientFrame(self)
-        self.existing_appointment_frame = ManageAppointmentFrame(self)
+        self.manageAppointment_Frame = ManageAppointmentFrame(self)
         self.new_appointment_frame = BookAppointmentFrame(self)
-        self.appointment_results_frame = AppointmentResultsFrame(self)
+        self.appointmentDetails_frame = AppointmentDetailsFrame(self)
         self.recall_frame = RecallFrame(self)
 
 
 
         self.frames = [
-            self.login_frame,
-            self.dashboard_frame,
+            self.loginFrame,
+            self.dashboardFrame,
             self.patient_frame,
-            self.patient_details_frame,
+            self.patientDetails_frame,
             self.add_patient_frame,
-            self.existing_appointment_frame,
+            self.manageAppointment_Frame,
             self.new_appointment_frame,
-            self.appointment_results_frame,
+            self.appointmentDetails_frame,
             self.recall_frame
         ]
 
-        self.show_frame(self.login_frame)
+        self.show_frame(self.loginFrame)
 
     def show_frame(self, frame):
         for f in self.frames:
@@ -94,8 +94,8 @@ class LoginFrame(ctk.CTkFrame):
             staff_id, role, username = result
             self.app.current_user = username
             self.app.attempts = 0
-            self.app.dashboard_frame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}",font= ctk.CTkFont(size=30, weight="bold"))
-            self.app.show_frame(self.app.dashboard_frame)
+            self.app.dashboardFrame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}",font= ctk.CTkFont(size=30, weight="bold"))
+            self.app.show_frame(self.app.dashboardFrame)
 
 
 class DashboardFrame(ctk.CTkFrame):
@@ -127,14 +127,14 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.add_patient_frame)
 
     def open_appointment_frame(self):
-        self.app.show_frame(self.app.existing_appointment_frame)
+        self.app.show_frame(self.app.manageAppointment_Frame)
 
     def open_recall_frame(self):
         self.app.show_frame(self.app.recall_frame)
 
     def logout(self):
 
-        login = self.app.login_frame
+        login = self.app.loginFrame
 
         login.username_entry.delete(0, "end")
         login.password_entry.delete(0, "end")
@@ -142,7 +142,7 @@ class DashboardFrame(ctk.CTkFrame):
         login.error_label.pack_forget()
         login.locked_label.pack_forget()
 
-        self.app.show_frame(self.app.login_frame)
+        self.app.show_frame(self.app.loginFrame)
 
 
 class PatientFrame(ctk.CTkFrame):
@@ -238,15 +238,15 @@ class PatientFrame(ctk.CTkFrame):
         widths = [60, 120, 120, 120, 120]
         for Count in range(5):
             ctk.CTkLabel(row,text=patient[Count],width=widths[Count]).grid(row=0,column=Count,padx=5)
-        patient_id = patient[0]
-        ctk.CTkButton(row,text="Open",width=80,command=partial(self.open_patient,patient_id)).grid(row=0, column=5, padx=5)
+        patientID = patient[0]
+        ctk.CTkButton(row,text="Open",width=80,command=partial(self.open_patient,patientID)).grid(row=0, column=5, padx=5)
 
-    def open_patient(self, patient_id):
-        self.app.patient_details_frame.load_patient(patient_id)
-        self.app.show_frame(self.app.patient_details_frame)
+    def open_patient(self, patientID):
+        self.app.patientDetails_frame.load_patient(patientID)
+        self.app.show_frame(self.app.patientDetails_frame)
 
     def back(self):
-        self.app.show_frame(self.app.dashboard_frame)
+        self.app.show_frame(self.app.dashboardFrame)
 
 
 class PatientDetailsFrame(ctk.CTkFrame):
@@ -290,10 +290,10 @@ class PatientDetailsFrame(ctk.CTkFrame):
 
         self.back_button.pack(pady=20)
 
-    def load_patient(self, patient_id):
+    def load_patient(self, patientID):
         from datetime import datetime
-        self.patient_id = patient_id
-        patient = patients.get_patient_by_id(patient_id)
+        self.patientID = patientID
+        patient = patients.get_patient_by_id(patientID)
         self.firstname_entry.delete(0, "end")
         self.firstname_entry.insert(0, patient[1])
         self.surname_entry.delete(0, "end")
@@ -309,7 +309,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
         surname = self.surname_entry.get().strip()
         dob = self.dob_entry.get().strip()
         phone = self.phone_entry.get().strip()
-        result = patients.updatePatient(self.patient_id,firstname,surname,dob,phone,self.app.current_user)
+        result = patients.updatePatient(self.patientID,firstname,surname,dob,phone,self.app.current_user)
 
         if result == "SUCCESS":
             self.feedback_label.configure(text="Patient updated successfully",text_color="green")
@@ -323,7 +323,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Database error",text_color="red")
 
     def openAppointmentScreen(self):
-        self.app.new_appointment_frame.loadPatient(self.patient_id)
+        self.app.new_appointment_frame.loadPatient(self.patientID)
         self.app.show_frame(self.app.new_appointment_frame)
 
     def deletePatient(self):
@@ -341,7 +341,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
         ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
 
     def confirmDelete(self):
-        success = patients.deletePatient(self.patient_id, self.app.current_user)
+        success = patients.deletePatient(self.patientID, self.app.current_user)
         if success:
             self.confirm_window.destroy()
             self.app.patient_frame.refreshSearch()
@@ -411,7 +411,7 @@ class AddPatientFrame(ctk.CTkFrame):
 
 
     def back(self):
-        self.app.show_frame(self.app.dashboard_frame)
+        self.app.show_frame(self.app.dashboardFrame)
 
 class BookAppointmentFrame(ctk.CTkFrame):
 
@@ -436,14 +436,14 @@ class BookAppointmentFrame(ctk.CTkFrame):
 
         self.staff_lookup = {}
         StaffMembers = staff.getAllStaff()
-        Names = []
+        names = []
         for e in StaffMembers:
             StaffID = e[0]
             FullName = e[1] + " " + e[2]
 
-            Names.append(FullName)
+            names.append(FullName)
             self.staff_lookup[FullName] = StaffID
-        self.staff_menu.configure(values=Names)
+        self.staff_menu.configure(values=names)
 
         self.patient_label.pack()
         self.date_entry.pack(pady=5)
@@ -456,9 +456,9 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.book_button.pack(pady=7)
         ctk.CTkButton(self,text="Back",command=self.back).pack(padx=20)
 
-    def loadPatient(self, patient_id):
-        self.patient_id = patient_id
-        patient = patients.get_patient_by_id(patient_id)
+    def loadPatient(self, patientID):
+        self.patientID = patientID
+        patient = patients.get_patient_by_id(patientID)
         self.patient_label.configure(text=f"{patient[1]} {patient[2]}")
 
     def chooseSlot(self, slot):
@@ -537,55 +537,41 @@ class BookAppointmentFrame(ctk.CTkFrame):
             return
         staffID = self.staff_lookup[selectedStaff]
         duration = int(self.duration_menu.get())
-        result = appointments.createAppointment(self.patient_id,staffID,date,self.selected_slot,duration,self.app.current_user)
+        result = appointments.createAppointment(self.patientID,staffID,date,self.selected_slot,duration,self.app.current_user)
         if result == "SUCCESS":
             self.feedback_label.configure(text="Appointment Booked Successfully",text_color="green",font=ctk.CTkFont(size=18, weight="bold"))
         else:
             self.feedback_label.configure(text="Appointment could not be booked", text_color="red",font=ctk.CTkFont(size=18, weight="bold"))
 
     def back(self):
-        self.app.show_frame(self.app.dashboard_frame)
+        self.app.show_frame(self.app.dashboardFrame)
 
 class ManageAppointmentFrame(ctk.CTkFrame):
-
-    def __init__(self, app):
-        super().__init__(app)
-        self.app = app
-        ctk.CTkLabel(self,text="Appointment Management").pack(pady=20)
-        self.viewAppointments_button = ctk.CTkButton(self,text="View Appointments",command=self.viewAppointments)
-        self.searchbydate_button = ctk.CTkButton(self, text="Search by Date", command=self.getAppointmentsByDate)
-        self.searchbypatient_button = ctk.CTkButton(self,text="Search by Patient",command=self.getAppointmentsByPatient)
-        #self.cancelappointment_button = ctk.CTkButton(self,text="View Recalls",command=self.deleteAppointment)
-        #self.editappointment_button = ctk.CTkButton(self,text="Logout",command=self.updateAppointment)
-
-        self.viewAppointments_button.pack(pady=10)
-        self.searchbydate_button.pack(pady=10)
-        self.searchbypatient_button.pack(pady=10)
-        #self.cancelappointment_button.pack(pady=10)
-        #self.editappointment_button.pack(pady=50)
-
-        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
-
-    def viewAppointments(self):
-        results = appointments.getAllAppointments()
-        self.app.appointment_results_frame.loadResults(results)
-        self.app.show_frame(self.app.appointment_results_frame)
-
-    def getAppointmentsByDate(self):
-        pass
-    def getAppointmentsByPatient(self):
-        pass
-
-    def back(self):
-        self.app.show_frame(self.app.dashboard_frame)
-
-class AppointmentResultsFrame(ctk.CTkFrame):
-
     def __init__(self, app):
         super().__init__(app)
         self.app = app
 
-        ctk.CTkLabel(self, text="Appointment Results", font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+        self.current_page = 1
+        self.records_per_page = 10
+        self.results = []
+
+        ctk.CTkLabel(self, text="Appointment Management", font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+
+        self.search_frame = ctk.CTkFrame(self)
+        self.search_frame.pack(fill="x", padx=20, pady=10)
+
+        ctk.CTkLabel(self.search_frame, text="Patient Name").grid(row=0, column=0, padx=10)
+        ctk.CTkLabel(self.search_frame, text="Date").grid(row=0, column=1, padx=10)
+
+        self.patient_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Patient Name")
+        self.date_entry = ctk.CTkEntry(self.search_frame, placeholder_text="DD/MM/YYYY")
+
+        self.patient_entry.grid(row=1, column=0, padx=10)
+        self.date_entry.grid(row=1, column=1, padx=10)
+
+        ctk.CTkButton(self.search_frame, text="Search", command=self.searchAppointments).grid(row=1, column=2, padx=10)
+        ctk.CTkButton(self.search_frame, text="Show All", command=self.loadAllAppointments).grid(row=1, column=3, padx=10)
+
         self.header = ctk.CTkFrame(self)
         self.header.pack(fill="x", padx=20)
         ctk.CTkLabel(self.header, text="ID", width=60).pack(side="left", padx=5)
@@ -593,31 +579,95 @@ class AppointmentResultsFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.header, text="Time", width=100).pack(side="left", padx=5)
         ctk.CTkLabel(self.header, text="Patient", width=180).pack(side="left", padx=5)
         ctk.CTkLabel(self.header, text="Staff", width=180).pack(side="left", padx=5)
-        ctk.CTkLabel(self.header, text="Duration", width=100).pack(side="left", padx=5)
+        ctk.CTkLabel(self.header, text="Duration", width=100).pack(side="left",padx= 5)
 
         self.results_frame = ctk.CTkScrollableFrame(self, width=1000, height=500)
         self.results_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        self.navigation_frame = ctk.CTkFrame(self)
+        self.navigation_frame.pack(pady=10)
+        ctk.CTkButton(self.navigation_frame, text="Previous", command=self.previousPage).pack(side="left", padx=10)
+        self.page_label = ctk.CTkLabel(self.navigation_frame, text="Page 1")
+        self.page_label.pack(side="left", padx=10)
+        ctk.CTkButton(self.navigation_frame, text="Next", command=self.nextPage).pack(side="left", padx=10)
         ctk.CTkButton(self, text="Back", command=self.back).pack(pady=20)
 
-    def loadResults(self, results):
+        self.loadAllAppointments()
+
+    def loadAllAppointments(self):
+        self.patient_entry.delete(0, "end")
+        self.date_entry.delete(0, "end")
+        self.results = appointments.getAllAppointments()
+        self.current_page = 1
+        self.displayResults()
+
+    def displayResults(self):
+        from functools import partial
         for w in self.results_frame.winfo_children():
             w.destroy()
-        if len(results) == 0:
+
+        if len(self.results) == 0:
             ctk.CTkLabel(self.results_frame, text="No appointments found", text_color="red").pack(pady=20)
+            self.page_label.configure(text="Page 1 of 1")
             return
-        for appointment in results:
+
+        start = (self.current_page - 1) * self.records_per_page
+        end = start + self.records_per_page
+        for appointment in self.results[start:end]:
             row = ctk.CTkFrame(self.results_frame)
             row.pack(fill="x", pady=2)
             ctk.CTkLabel(row, text=appointment[0], width=60).pack(side="left", padx=5)
-            ctk.CTkLabel(row, text=appointment[1], width=120).pack(side="left", padx=5)
+            formattedDate = datetime.strptime(appointment[1], "%Y-%m-%d").strftime("%d/%m/%Y")
+            ctk.CTkLabel(row, text=formattedDate, width=120).pack(side="left", padx=5)
             ctk.CTkLabel(row, text=appointment[2], width=100).pack(side="left", padx=5)
             ctk.CTkLabel(row, text=appointment[3], width=180).pack(side="left", padx=5)
             ctk.CTkLabel(row, text=appointment[4], width=180).pack(side="left", padx=5)
             ctk.CTkLabel(row, text=f"{appointment[5]} mins", width=100).pack(side="left", padx=5)
+            ctk.CTkButton(row, text="Open", width=80, command=partial(self.openAppointment, appointment[0])).pack(side="left", padx=5)
+        totalPages = max(1, (len(self.results) + self.records_per_page - 1) // self.records_per_page)
+        self.page_label.configure(text=f"Page {self.current_page} of {totalPages}")
 
+    def openAppointment(self, appointmentID):
+        self.app.appointmentDetails_frame.loadAppointment(appointmentID)
+        self.app.show_frame(self.app.appointmentDetails_frame)
+
+    def nextPage(self):
+        if self.current_page * self.records_per_page < len(self.results):
+            self.current_page += 1
+            self.displayResults()
+
+    def previousPage(self):
+
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.displayResults()
+
+    def searchAppointments(self):
+        patient = self.patient_entry.get().strip()
+        date = self.date_entry.get().strip()
+        self.results = appointments.searchAppointments(patient, date)
+        self.current_page = 1
+        self.displayResults()
 
     def back(self):
-        self.app.show_frame(self.app.existing_appointment_frame)
+        self.app.show_frame(self.app.dashboardFrame)
+
+class AppointmentDetailsFrame(ctk.CTkFrame):
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        ctk.CTkLabel(self,text="Recall Management").pack(pady=20)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
+
+
+
+    def updateAppointment(self):
+
+
+    def deleteAppointment(self):
+
+    def back(self):
+        self.app.show_frame(self.app.dashboardFrame)
+
 
 class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
@@ -627,6 +677,6 @@ class RecallFrame(ctk.CTkFrame):
         ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
     def back(self):
-        self.app.show_frame(self.app.dashboard_frame)
+        self.app.show_frame(self.app.dashboardFrame)
 app = App()
 app.mainloop()

@@ -422,3 +422,34 @@ def getAllAppointments():
         A.Appointment_time
     """)
     return cursor.fetchall()
+
+def searchAppointments(patient, date):
+    if date != "":
+        try:
+            date = datetime.strptime(date, "%d/%m/%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            return []
+    cursor.execute("""
+    SELECT
+        A.AppointmentID,
+        A.Appointment_date,
+        A.Appointment_time,
+        P.FirstName || ' ' || P.Surname AS PatientName,
+        S.FirstName || ' ' || S.Surname AS StaffName,
+        A.Duration
+    FROM Appointments_Table A
+    INNER JOIN Patients_Table P
+        ON A.PatientID = P.PatientID
+    INNER JOIN Staff_Table S
+        ON A.StaffID = S.StaffID
+    WHERE
+        (P.FirstName LIKE ?
+        OR P.Surname LIKE ?)
+        AND A.Appointment_date LIKE ?
+
+    ORDER BY
+        A.Appointment_date,
+        A.Appointment_time
+    """, (f"%{patient}%",f"%{patient}%",f"%{date}%"))
+    return cursor.fetchall()
+
