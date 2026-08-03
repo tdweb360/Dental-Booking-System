@@ -104,17 +104,17 @@ def createUsername(username):
 
 def createPass(password, pass2):
     if len(password) < 8:
-        return "PASSWORD_LENGTH"
+        return "PASSWORD LENGTH"
     elif not re.search(r"[A-Z]", password):
-        return "PASSWORD_UPPERCASE"
+        return "PASSWORD UPPERCASE"
     elif not re.search(r"[a-z]", password):
-        return "PASSWORD_LOWERCASE"
+        return "PASSWORD LOWERCASE"
     elif not re.search(r"\d", password):
-        return "PASSWORD_NUMBER"
+        return "PASSWORD NUMBER"
     elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        return "PASSWORD_SPECIAL"
+        return "PASSWORD SPECIAL"
     elif password != pass2:
-        return "PASSWORD_MATCH"
+        return "PASSWORD MATCH"
     return "VALID"
 
 
@@ -324,6 +324,63 @@ def deleteStaff(staffID, current_user):
         return "SUCCESS"
     except:
         return "DATABASE_ERROR"
+
+def updateStaff(staffID,firstname,surname,username,role,current_user):
+    if not patients.validateFNandSN(
+            firstname,
+            surname):
+        return "INVALID_NAME"
+
+    try:
+        cursor.execute("""
+        SELECT StaffID
+        FROM Staff_Table
+        WHERE Username = ?
+        """, (username,))
+        result = cursor.fetchone()
+        if result and result[0] != staffID:
+            return "INVALID_USERNAME"
+        cursor.execute("""
+        UPDATE Staff_Table
+        SET
+        FirstName = ?,
+        Surname = ?,
+        Username = ?,
+        Staff_Role = ?
+        WHERE StaffID = ?
+        """,(firstname,surname,username,role,staffID))
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "EDIT_STAFF",
+            f"StaffID {staffID}"
+        )
+        return "SUCCESS"
+    except:
+        return "DATABASE_ERROR"
+
+def resetPasswordGUI(staffID,password,confirmPassword,current_user):
+    passResult = createPass(password,confirmPassword)
+    if passResult != "VALID":
+        return passResult
+    hashedPassword = hashpass(password)
+    try:
+        cursor.execute("""
+        UPDATE Staff_Table
+        SET Password_Hash = ?
+        WHERE StaffID = ?
+        """,(hashedPassword,staffID))
+
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "RESET_PASSWORD",
+            f"StaffID {staffID}"
+        )
+        return "SUCCESS"
+    except:
+        return "DATABASE_ERROR"
+
 
 def searchStaff():
     valid = False

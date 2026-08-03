@@ -746,35 +746,51 @@ class StaffManagementFrame(ctk.CTkFrame):
 
         super().__init__(app)
         self.app = app
-        ctk.CTkLabel(self,text="Staff Management",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
-        self.search_entry = ctk.CTkEntry(self,placeholder_text="Search name")
-        self.search_entry.pack()
-        ctk.CTkButton(self,text="Search",command=self.searchStaff).pack()
-        self.results_frame = ctk.CTkScrollableFrame(self,width=800,height=500)
-        self.results_frame.pack(fill="both", expand=True)
-
-        self.firstname_entry = ctk.CTkEntry(self,placeholder_text="First name")
-        self.surname_entry = ctk.CTkEntry(self,placeholder_text="Surname")
-        self.username_entry = ctk.CTkEntry(self,placeholder_text="Username")
-        self.password_entry = ctk.CTkEntry(self,placeholder_text="Password",show="*")
-        self.reenter_password_entry = ctk.CTkEntry(self,placeholder_text="Re-enter Password",show= "*")
-        self.role_menu = ctk.CTkOptionMenu(self,values=["Dentist","Receptionist","Manager"])
-        self.register_button = ctk.CTkButton(self,text="Register", command=self.registerStaffMember)
-        self.feedback_label = ctk.CTkLabel(self,text="")
+        self.title_label = ctk.CTkLabel(self,text="Staff Management",font=ctk.CTkFont(size=30,weight="bold"))
+        self.content_frame = ctk.CTkFrame(self)
+        self.add_frame = ctk.CTkFrame(self.content_frame)
+        self.search_frame = ctk.CTkFrame(self.content_frame)
+        self.add_title = ctk.CTkLabel(self.add_frame,text="Add New Staff",font=ctk.CTkFont(size=22,weight="bold"))
+        self.firstname_entry = ctk.CTkEntry(self.add_frame,placeholder_text="First Name")
+        self.surname_entry = ctk.CTkEntry(self.add_frame,placeholder_text="Surname")
+        self.username_entry = ctk.CTkEntry(self.add_frame,placeholder_text="Username")
+        self.password_entry = ctk.CTkEntry(self.add_frame,placeholder_text="Password",show="*")
+        self.reenter_password_entry = ctk.CTkEntry(self.add_frame,placeholder_text="Confirm Password",show="*")
+        self.role_menu = ctk.CTkOptionMenu(self.add_frame,values=["Dentist","Receptionist","Manager"])
+        self.register_button = ctk.CTkButton(self.add_frame,text="Register",command=self.registerStaffMember)
+        self.feedback_label = ctk.CTkLabel(self.add_frame,text="")
+        self.search_title = ctk.CTkLabel(self.search_frame,text="Search Staff",font=ctk.CTkFont(size=22,weight="bold"))
+        self.search_controls = ctk.CTkFrame(self.search_frame,fg_color="transparent")
+        self.search_entry = ctk.CTkEntry(self.search_controls,placeholder_text="Search Name")
+        self.search_button = ctk.CTkButton(self.search_controls,text="Search",command=self.searchStaff)
+        self.results_frame = ctk.CTkScrollableFrame(self.search_frame)
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
-
-
-
-        self.firstname_entry.pack(pady=10)
-        self.surname_entry.pack(pady=10)
-        self.username_entry.pack(pady=10)
-        self.password_entry.pack(pady=10)
-        self.reenter_password_entry.pack(pady=10)
-        self.role_menu.pack(pady=10)
+        self.title_label.pack(pady=20)
+        self.content_frame.pack(fill="both",expand=True,padx=20,pady=10)
+        self.content_frame.grid_columnconfigure(0,weight=2)
+        self.content_frame.grid_columnconfigure(1,weight=3)
+        self.add_frame.grid(row=0,column=0,sticky="nsew",padx=(0,10))
+        self.search_frame.grid(row=0,column=1,sticky="nsew",padx=(10,0))
+        self.add_title.pack(pady=15)
+        self.firstname_entry.pack(fill="x",padx=20,pady=5)
+        self.surname_entry.pack(fill="x",padx=20,pady=5)
+        self.username_entry.pack(fill="x",padx=20,pady=5)
+        self.password_entry.pack(fill="x",padx=20,pady=5)
+        self.reenter_password_entry.pack(fill="x",padx=20,pady=5)
+        self.role_menu.pack(fill="x",padx=20,pady=10)
         self.register_button.pack(pady=10)
         self.feedback_label.pack(pady=5)
-        self.back_button.pack(pady=5)
-
+        self.search_title.pack(pady=15)
+        self.search_controls.pack(fill="x",padx=20,pady=10)
+        self.search_entry.pack(side="left",fill="x",expand=True,padx=(0,10))
+        self.search_button.pack(side="left")
+        self.results_header = ctk.CTkFrame(self.search_frame)
+        self.results_header.pack(fill="x", padx=20)
+        ctk.CTkLabel(self.results_header, text="Name", width=180).pack(side="left", padx=10)
+        ctk.CTkLabel(self.results_header, text="Username", width=150).pack(side="left", padx=10)
+        ctk.CTkLabel(self.results_header, text="Role", width=120).pack(side="left", padx=10)
+        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+        self.back_button.pack(pady=20)
 
     def registerStaffMember(self):
         firstN = self.firstname_entry.get().strip()
@@ -822,46 +838,58 @@ class StaffManagementFrame(ctk.CTkFrame):
         name = self.search_entry.get().strip()
         results = staff.searchStaffName(name)
         if len(results) == 0:
-            ctk.CTkLabel(self.results_frame,text="No staff members found",text_color="red").pack()
+            ctk.CTkLabel(self.results_frame,text="No staff members found",text_color="red").pack(pady=10)
             return
 
         from functools import partial
 
         for member in results:
             row = ctk.CTkFrame(self.results_frame)
-            row.pack(fill="x", pady=2)
-            ctk.CTkLabel(row,text=f"{member[1]} {member[2]}").pack(side="left", padx=10)
-            ctk.CTkLabel(row,text=member[3]).pack(side="left", padx=10)
-            ctk.CTkLabel(row,text=member[5]).pack(side="left", padx=10)
-            ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member[0])).pack(side="right", padx=10)
+            row.pack(fill="x",pady=2)
+            ctk.CTkLabel(row,text=f"{member[1]} {member[2]}",width=180).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member[3],width=150).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member[5],width=120).pack(side="left",padx=10)
+            ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member[0])).pack(side="right",padx=10)
 
     def openStaff(self, staffID):
         self.app.staffDetails_frame.loadStaff(staffID)
-        self.app.show_frame( self.app.staffDetails_frame)
-
+        self.app.show_frame(self.app.staffDetails_frame)
     def back(self):
         self.app.show_frame(self.app.dashboardFrame)
 
 
 class StaffDetailsFrame(ctk.CTkFrame):
-
     def __init__(self, app):
         super().__init__(app)
         self.app = app
-        ctk.CTkLabel(self,text="Staff Details",font=ctk.CTkFont(size=30,weight="bold")).pack(pady=20)
+        self.title_label = ctk.CTkLabel(self,text="Staff Details",font=ctk.CTkFont(size=30,weight="bold"))
+        self.firstname_label = ctk.CTkLabel(self,text="First Name")
         self.firstname_entry = ctk.CTkEntry(self)
-        self.firstname_entry.pack()
+        self.surname_label = ctk.CTkLabel(self,text="Surname")
         self.surname_entry = ctk.CTkEntry(self)
-        self.surname_entry.pack()
+        self.username_label = ctk.CTkLabel(self,text="Username")
         self.username_entry = ctk.CTkEntry(self)
-        self.username_entry.pack()
+        self.role_label = ctk.CTkLabel(self,text="Role")
         self.role_menu = ctk.CTkOptionMenu(self,values=["Dentist","Receptionist","Manager"])
-        self.role_menu.pack()
-        ctk.CTkButton(self,text="Save",command=self.saveChanges).pack(pady=5)
-        ctk.CTkButton(self,text="Delete Staff",command=self.deleteStaff).pack(pady=5)
-        ctk.CTkButton(self,text="Reset Password",command=self.resetPassword).pack(pady=5)
+        self.save_button = ctk.CTkButton(self,text="Save Changes",command=self.saveChanges)
+        self.reset_button = ctk.CTkButton(self,text="Reset Password",command=self.resetPassword)
+        self.delete_button = ctk.CTkButton(self,text="Delete Staff",fg_color="#B22222",hover_color="#8B1A1A",command=self.deleteStaff)
+        self.feedback_label = ctk.CTkLabel(self,text="")
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
-        self.back_button.pack(pady=10)
+        self.title_label.pack(pady=20)
+        self.firstname_label.pack()
+        self.firstname_entry.pack(pady=5)
+        self.surname_label.pack()
+        self.surname_entry.pack(pady=5)
+        self.username_label.pack()
+        self.username_entry.pack(pady=5)
+        self.role_label.pack()
+        self.role_menu.pack(pady=5)
+        self.save_button.pack(pady=10)
+        self.reset_button.pack(pady=5)
+        self.delete_button.pack(pady=5)
+        self.feedback_label.pack(pady=10)
+        self.back_button.pack(pady=20)
 
     def loadStaff(self, staffID):
         self.staffID = staffID
@@ -874,14 +902,63 @@ class StaffDetailsFrame(ctk.CTkFrame):
         self.username_entry.insert(0, member[3])
         self.role_menu.set(member[5])
 
+    def saveChanges(self):
+        firstname = self.firstname_entry.get().strip()
+        surname = self.surname_entry.get().strip()
+        username = self.username_entry.get().strip()
+        role = self.role_menu.get()
+        result = staff.updateStaff(self.staffID,firstname,surname,username,role,self.app.current_user)
 
+        if result == "SUCCESS":
+            self.feedback_label.configure(text="Staff updated successfully",text_color="green")
+        elif result == "INVALID_NAME":
+            self.feedback_label.configure(text="Invalid name",text_color="red")
+        elif result == "INVALID_USERNAME":
+            self.feedback_label.configure(text="Username already exists",text_color="red")
+        else:
+            self.feedback_label.configure(text="Database error",text_color="red")
 
+    def deleteStaff(self):
+        result = staff.deleteStaff(self.staffID,self.app.current_user)
+        if result == "SUCCESS":
+            self.app.staff_frame.searchStaff()
+            self.app.show_frame(self.app.staff_frame)
+        else:
+            self.feedback_label.configure(text="Database error",text_color="red")
 
+    def resetPassword(self):
+        self.popup = ctk.CTkToplevel(self)
+        self.popup.title("Reset Password")
+        self.newpassword_entry = ctk.CTkEntry(self.popup,placeholder_text="Password",show="*")
+        self.confirm_entry = ctk.CTkEntry(self.popup,placeholder_text="Confirm Password",show="*")
+        self.newpassword_entry.pack(pady=5)
+        self.confirm_entry.pack(pady=5)
+        ctk.CTkButton(self.popup,text="Reset Password",command=self.submit).pack(pady=10)
+
+    def submit(self):
+
+        result = staff.resetPasswordGUI(self.staffID,self.newpassword_entry.get().strip(),self.confirm_entry.get().strip(),self.app.current_user)
+
+        if result == "SUCCESS":
+            self.feedback_label.configure(text="Password reset successfully",text_color="green")
+            self.popup.destroy()
+        elif result == "PASSWORD LENGTH":
+            self.feedback_label.configure(text="Password must be at least 8 characters",text_color="red")
+        elif result == "PASSWORD UPPERCASE":
+            self.feedback_label.configure(text="Password must contain an uppercase letter",text_color="red")
+        elif result == "PASSWORD LOWERCASE":
+            self.feedback_label.configure(text="Password must contain a lowercase letter",text_color="red")
+        elif result == "PASSWORD NUMBER":
+            self.feedback_label.configure(text="Password must contain a number",text_color="red")
+        elif result == "PASSWORD SPECIAL":
+            self.feedback_label.configure(text="Password must contain a special character",text_color="red")
+        elif result == "PASSWORD MATCH":
+            self.feedback_label.configure(text="Passwords do not match",text_color="red")
+        else:
+            self.feedback_label.configure(text="Database error",text_color="red")
 
     def back(self):
-        self.app.show_frame(
-            self.app.staff_frame
-        )
+        self.app.show_frame(self.app.staff_frame)
 
 class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
