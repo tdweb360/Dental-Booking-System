@@ -367,7 +367,16 @@ def searchStaffRole():
         except ValueError:
             print("Input must be a number")
 
-def searchStaffName():
+def getAllStaff():
+
+    cursor.execute("""
+    SELECT StaffID, FirstName, Surname
+    FROM Staff_Table
+    ORDER BY Surname, FirstName
+    """)
+    return cursor.fetchall()
+
+def searchStaffNameOLD():
     name = input("Enter name: ").strip().capitalize()
     searchPattern = "%" + name + "%"
     pattern = r"^[A-Za-z'-]+$"

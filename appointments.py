@@ -8,41 +8,22 @@ connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
 
-def bookAppointment(patientID, current_user, presentDate=None):
-    staffID = staff.searchStaff()
-    if staffID is None:
-        print("No staff member selected")
-        return
-    if presentDate is None:
-        date = validateAppointmentDate()
-    else:
-        date = presentDate
-    time = validateAppointmentTime()
-    duration = selectDuration()
+def createAppointment(patientID,staffID,date,time,duration,current_user):
+    date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
+
+    conflict = checkConflict(date,time,duration,staffID,patientID)
+    if conflict:
+        return "CONFLICT"
+    cursor.execute("""
+    INSERT INTO Appointments_Table
+    (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
+    VALUES (?,?,?,?,?)
+    """, (date, time, patientID, staffID, duration))
+    connect.commit()
+    Logging.log_action(current_user,"CREATE_APPOINTMENT",f"PatientID {patientID}, StaffID {staffID}")
+    return "SUCCESS"
 
 
-    excludeAppointmentID = None
-    conflict = checkConflict(date, time, duration,staffID,patientID, excludeAppointmentID)
-    if conflict != True:
-        cursor.execute("""
-        INSERT INTO Appointments_Table
-        (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
-        VALUES (?,?,?,?,?)
-        """, (date, time, patientID, staffID, duration))
-        connect.commit()
-        cursor.execute("""
-        SELECT last_insert_rowid()
-        """)
-        appointmentID = cursor.fetchone()[0]
-        Logging.log_action(
-            current_user,
-            "CREATE_APPOINTMENT",
-            f"AppointmentID {appointmentID}, PatientID {patientID}, StaffID {staffID}"
-        )
-        print("Appointment booked")
-        return True
-    else:
-        return False
 
 
 def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID=None):
@@ -390,15 +371,26 @@ def validateAppointmentTime(time):
     except ValueError:
         return False
 
-def getAppointmentsByDate(date):
-    date = datetime.strptime(
-        date,
-        "%d/%m/%Y"
-    ).strftime("%Y-%m-%d")
+def getAppointmentsByDate(date, staffID):
+    date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
     cursor.execute("""
-        SELECT Appointment_time
-        FROM Appointments_Table
-        WHERE Appointment_date = ?
-        ORDER BY Appointment_time
-    """, (date,))
+    SELECT Appointment_time, Duration
+    FROM Appointments_Table
+    WHERE Appointment_date = ?
+    AND StaffID = ?
+    ORDER BY Appointment_time
+    """, (date, staffID))
+    return cursor.fetchall()
+
+def getAppointmentsByDateAndStaff(date,staffID):
+
+    date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
+    cursor.execute("""
+    SELECT Appointment_time, Duration
+    FROM Appointments_Table
+    WHERE Appointment_date = ?
+    AND StaffID = ?
+    ORDER BY Appointment_time
+    """, (date, staffID))
+
     return cursor.fetchall()

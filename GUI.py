@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+import staff
 import appointments
 import authentication
 import Logging
@@ -217,7 +217,7 @@ class PatientFrame(ctk.CTkFrame):
         for w in self.results_frame.winfo_children():
             if w != self.header:
                 w.destroy()
-        if not results:
+        if len(results) == 0:
             no_results_label = ctk.CTkLabel(self.results_frame,text="No patients found",text_color="red")
             no_results_label.pack(pady=10)
             return
@@ -227,18 +227,17 @@ class PatientFrame(ctk.CTkFrame):
 
     def refreshSearch(self):
         self.search_patient()
-        self.feedback_label.configure(
-            text="Patient deleted successfully",
-            text_color="green",font=ctk.CTkFont(size=20, weight="bold"))
-    def create_patient_row(self, patient):
+        self.feedback_label.configure(text="Patient deleted successfully",text_color="green",font=ctk.CTkFont(size=20, weight="bold"))
 
+    def create_patient_row(self, patient):
+        from functools import partial
         row = ctk.CTkFrame(self.results_frame)
         row.pack(fill="x", pady=2)
         widths = [60, 120, 120, 120, 120]
-        for col, value in enumerate(patient[:5]):
-            ctk.CTkLabel(row,text=value,width=widths[col]).grid(row=0,column=col,padx=5)
+        for Count in range(5):
+            ctk.CTkLabel(row,text=patient[Count],width=widths[Count]).grid(row=0,column=Count,padx=5)
         patient_id = patient[0]
-        ctk.CTkButton(row,text="Open",width=80,command=lambda: self.open_patient(patient_id)).grid(row=0,column=5,padx=5)
+        ctk.CTkButton(row,text="Open",width=80,command=partial(self.open_patient,patient_id)).grid(row=0, column=5, padx=5)
 
     def open_patient(self, patient_id):
         self.app.patient_details_frame.load_patient(patient_id)
@@ -431,11 +430,23 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.results_frame = ctk.CTkScrollableFrame(self, width=300, height=250)
         self.selected_slot_label = ctk.CTkLabel(self, text="Selected Slot: None")
         self.book_button = ctk.CTkButton(self, text="Book Appointment", command=self.bookAppointment)
+        self.staff_menu = ctk.CTkOptionMenu(self, values=["Select Staff"])
 
+        self.staff_lookup = {}
+        StaffMembers = staff.getAllStaff()
+        Names = []
+        for e in StaffMembers:
+            StaffID = e[0]
+            FullName = e[1] + " " + e[2]
+
+            Names.append(FullName)
+            self.staff_lookup[FullName] = StaffID
+        self.staff_menu.configure(values=Names)
 
         self.patient_label.pack()
         self.date_entry.pack(pady=5)
         self.duration_menu.pack(pady=5)
+        self.staff_menu.pack(pady=5)
         self.search_button.pack(pady=5)
         self.feedback_label.pack()
         self.results_frame.pack(pady=5)
@@ -455,6 +466,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
 
     def checkDay(self):
         from datetime import datetime, timedelta
+        from functools import partial
 
         all_slots = [
             "09:00","09:15","09:30","09:45",
@@ -466,44 +478,58 @@ class BookAppointmentFrame(ctk.CTkFrame):
             "15:00","15:15","15:30","15:45",
             "16:00","16:15","16:30","16:45"
         ]
+        #clear prev results
         for w in self.results_frame.winfo_children():
             w.destroy()
         date = self.date_entry.get().strip()
         if not appointments.validateAppointmentDate(date):
-
-            self.feedback_label.configure(
-                text="Invalid date",
-                text_color="red"
-            )
+            self.feedback_label.configure(text="Invalid date",text_color="red")
             return
+
         self.feedback_label.configure(text="")
-        results = appointments.getAppointmentsByDate(date)
+        selectedStaff = self.staff_menu.get()
+        if selectedStaff == "Select Staff":
+            self.feedback_label.configure(text="Select a staff member",text_color="red")
+            return
+        staffID = self.staff_lookup[selectedStaff]
+        results = appointments.getAppointmentsByDateAndStaff(date,staffID)
         booked_slots = []
         for appointment in results:
             start_time = datetime.strptime(appointment[0],"%H:%M")
             duration = appointment[1]
             slots_needed = duration // 15
-            for i in range(slots_needed):
-                slot_time = start_time + timedelta(minutes=i * 15)
-
+            for Count in range(slots_needed):
+                slot_time = start_time + timedelta(minutes=Count * 15)
                 booked_slots.append(slot_time.strftime("%H:%M"))
         ctk.CTkLabel(self.results_frame,text="Time        Status",font=ctk.CTkFont(size=16, weight="bold")).pack(pady=5)
-
+        #available in green and clickable, booked not clickable
         for slot in all_slots:
             if slot in booked_slots:
                 ctk.CTkLabel(self.results_frame,text=f"{slot}    BOOKED",text_color="red").pack(pady=2)
             else:
-                button = ctk.CTkButton(self.results_frame,text=f"{slot}    AVAILABLE",fg_color="green",command=lambda s=slot: self.chooseSlot(s))
+                #pass slot val to chooseSlot when click
+                button = ctk.CTkButton(self.results_frame,text=f"{slot} AVAILABLE",fg_color="green",command=partial(self.chooseSlot, slot))
                 button.pack(pady=2)
 
     def bookAppointment(self):
-        if self.selected_slot is None:
+        if self.selected_slot == None:
             self.feedback_label.configure(text="Select a slot first",text_color="red")
             return
         date = self.date_entry.get().strip()
-        print(self.patient_id)
-        print(date)
-        print(self.selected_slot)
+        selectedStaff = self.staff_menu.get()
+        if selectedStaff == "Select Staff":
+            self.feedback_label.configure(text="Select a staff member",text_color="red")
+            return
+        staffID = self.staff_lookup[selectedStaff]
+        duration = int(self.duration_menu.get())
+        selectedStaff = self.staff_menu.get()
+        staffID = self.staff_lookup[selectedStaff]
+        result = appointments.createAppointment(self.patient_id,staffID,date,self.selected_slot,duration,self.app.current_user)
+        if result == "SUCCESS":
+            self.feedback_label.configure(text="Appointment Booked Successfully",text_color="green")
+            self.back()
+        else:
+            self.feedback_label.configure(text="Appointment could not be booked", text_color="red")
 
     def back(self):
         self.app.show_frame(self.app.dashboard_frame)
