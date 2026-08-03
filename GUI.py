@@ -807,17 +807,17 @@ class StaffManagementFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Invalid first name or surname",text_color="red")
         elif result == "INVALID USERNAME":
             self.feedback_label.configure(text="Invalid or duplicate username",text_color="red")
-        elif result == "PASSWORD_LENGTH":
+        elif result == "PASSWORD LENGTH":
             self.feedback_label.configure(text="Password must be at least 8 characters",text_color="red")
-        elif result == "PASSWORD_UPPERCASE":
+        elif result == "PASSWORD UPPERCASE":
             self.feedback_label.configure(text="Password must contain an uppercase letter",text_color="red")
-        elif result == "PASSWORD_LOWERCASE":
+        elif result == "PASSWORD LOWERCASE":
             self.feedback_label.configure(text="Password must contain a lowercase letter",text_color="red")
-        elif result == "PASSWORD_NUMBER":
+        elif result == "PASSWORD NUMBER":
             self.feedback_label.configure(text="Password must contain a number",text_color="red")
-        elif result == "PASSWORD_SPECIAL":
+        elif result == "PASSWORD SPECIAL":
             self.feedback_label.configure(text="Password must contain a special character",text_color="red")
-        elif result == "PASSWORD_MATCH":
+        elif result == "PASSWORD MATCH":
             self.feedback_label.configure(text="Passwords do not match",text_color="red")
         else:
             self.feedback_label.configure(text="Database error",text_color="red")
