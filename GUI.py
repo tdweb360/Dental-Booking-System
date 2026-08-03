@@ -501,15 +501,28 @@ class BookAppointmentFrame(ctk.CTkFrame):
             for Count in range(slots_needed):
                 slot_time = start_time + timedelta(minutes=Count * 15)
                 booked_slots.append(slot_time.strftime("%H:%M"))
+        print(booked_slots)
+        selectedDuration = int(
+            self.duration_menu.get())
+        slotsNeeded = selectedDuration // 15
         ctk.CTkLabel(self.results_frame,text="Time        Status",font=ctk.CTkFont(size=16, weight="bold")).pack(pady=5)
         #available in green and clickable, booked not clickable
-        for slot in all_slots:
-            if slot in booked_slots:
-                ctk.CTkLabel(self.results_frame,text=f"{slot}    BOOKED",text_color="red").pack(pady=2)
-            else:
-                #pass slot val to chooseSlot when click
-                button = ctk.CTkButton(self.results_frame,text=f"{slot} AVAILABLE",fg_color="green",command=partial(self.chooseSlot, slot))
+        for Position in range(len(all_slots)):
+            slot = all_slots[Position]
+            Available = True
+            for Count in range(slotsNeeded):
+                CurrentPosition = Position + Count
+                if CurrentPosition >= len(all_slots):
+                    Available = False
+                else:
+                    CurrentSlot = all_slots[CurrentPosition]
+                    if CurrentSlot in booked_slots:
+                        Available = False
+            if Available:
+                button = ctk.CTkButton(self.results_frame,text=f"{slot} AVAILABLE",fg_color="green",command=partial(self.chooseSlot,slot ))
                 button.pack(pady=2)
+            else:
+                ctk.CTkLabel(self.results_frame,text=f"{slot} BOOKED",text_color="red").pack(pady=2)
 
     def bookAppointment(self):
         if self.selected_slot == None:

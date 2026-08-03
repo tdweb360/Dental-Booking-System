@@ -384,7 +384,10 @@ def getAppointmentsByDate(date, staffID):
 
 def getAppointmentsByDateAndStaff(date,staffID):
 
-    date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
+    date = datetime.strptime(
+        date,
+        "%d/%m/%Y"
+    ).strftime("%Y-%m-%d")
     cursor.execute("""
     SELECT Appointment_time, Duration
     FROM Appointments_Table
@@ -392,5 +395,8 @@ def getAppointmentsByDateAndStaff(date,staffID):
     AND StaffID = ?
     ORDER BY Appointment_time
     """, (date, staffID))
-
-    return cursor.fetchall()
+    Results = cursor.fetchall()
+    print("DATE:", date)
+    print("STAFF:", staffID)
+    print("RESULTS:", Results)
+    return Results
