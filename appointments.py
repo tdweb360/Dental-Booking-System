@@ -205,51 +205,46 @@ def editAppointmentMenu(results, current_user):
         except ValueError:
             print("Invalid Input")
 
-def editAppointment(appointmentID, current_user):
+def editAppointment(appointmentID,date,time,duration,patientID, staffID):
+    if not validateAppointmentDate(date):
+        return "INVALID DATE"
+    dbDate = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
+    if not validateAppointmentTime(time):
+        return "INVALID TIME"
+    conflict = checkConflict(dbDate,time,duration,staffID,patientID,appointmentID)
+    if conflict:
+        return "CONFLICT"
+    else:
+        return editAppointmentSQL(appointmentID,dbDate,time,duration,patientID,staffID)
 
+def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID):
+    try:
+        cursor.execute("""
+        UPDATE Appointments_Table
+        SET Appointment_date = ?,
+            Appointment_time = ?,
+            Duration = ?,
+            StaffID = ?
+        WHERE AppointmentID = ?
+        """, (date, time, duration, staffID, appointmentID))
+        connect.commit()
+        # Logging.log_action(
+        #     current_user,
+        #     "EDIT_APPOINTMENT",
+        #     f"AppointmentID {appointmentID}, StaffID {staffID}"
+        # )
+        return "SUCCESSFUL"
+    except:
+        return "UNSUCCESSFUL"
+
+
+def deleteAppointment(appointmentID):
     cursor.execute("""
-    SELECT PatientID
-    FROM Appointments_Table
+    DELETE FROM Appointments_Table
     WHERE AppointmentID = ?
     """, (appointmentID,))
-
-    patientID = cursor.fetchone()[0]
-    staffID = staff.searchStaff()
-    date = validateAppointmentDate()
-    time = validateAppointmentTime()
-    duration = selectDuration()
-    conflict = checkConflict(
-        date,
-        time,
-        duration,
-        staffID,
-        patientID,
-        appointmentID
-    )
-    if conflict:
-        print("Time slot already booked")
-
-    else:
-        confirm = input("Are you sure? ").strip().lower()
-        if confirm in ["yes", "y"]:
-            try:
-                cursor.execute("""
-                UPDATE Appointments_Table
-                SET Appointment_date = ?,
-                    Appointment_time = ?,
-                    Duration = ?,
-                    StaffID = ?
-                WHERE AppointmentID = ?
-                """, (date, time, duration, staffID, appointmentID))
-                connect.commit()
-                Logging.log_action(
-                    current_user,
-                    "EDIT_APPOINTMENT",
-                    f"AppointmentID {appointmentID}, StaffID {staffID}"
-                )
-                print("Appointment updated")
-            except:
-                print("Database error")
+    connect.commit()
+    return True
 
 def searchMenu(current_user):
     valid = False
@@ -396,9 +391,7 @@ def getAppointmentsByDateAndStaff(date,staffID):
     ORDER BY Appointment_time
     """, (date, staffID))
     Results = cursor.fetchall()
-    print("DATE:", date)
-    print("STAFF:", staffID)
-    print("RESULTS:", Results)
+
     return Results
 
 def getAllAppointments():
@@ -453,3 +446,16 @@ def searchAppointments(patient, date):
     """, (f"%{patient}%",f"%{patient}%",f"%{date}%"))
     return cursor.fetchall()
 
+def getAppointmentByID(appointmentID):
+    cursor.execute("""
+    SELECT
+        AppointmentID,
+        Appointment_date,
+        Appointment_time,
+        PatientID,
+        StaffID,
+        Duration
+    FROM Appointments_Table
+    WHERE AppointmentID = ?
+    """, (appointmentID,))
+    return cursor.fetchone()

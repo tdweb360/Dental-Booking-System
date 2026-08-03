@@ -652,21 +652,79 @@ class ManageAppointmentFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.dashboardFrame)
 
 class AppointmentDetailsFrame(ctk.CTkFrame):
+
     def __init__(self, app):
+
         super().__init__(app)
+
         self.app = app
-        ctk.CTkLabel(self,text="Recall Management").pack(pady=20)
-        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
+        ctk.CTkLabel(self,text="Appointment Details",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
 
+        ctk.CTkLabel(self, text="Date").pack()
+        self.date_entry = ctk.CTkEntry(self)
+        self.date_entry.pack(pady=5)
+        ctk.CTkLabel(self, text="Time").pack()
+        self.time_entry = ctk.CTkEntry(self)
+        self.time_entry.pack(pady=5)
+        ctk.CTkLabel(self, text="Duration").pack()
+        self.duration_menu = ctk.CTkOptionMenu(self, values=["15", "30", "45", "60"])
+        self.duration_menu.pack(pady=5)
+        self.feedback_label = ctk.CTkLabel(self, text="")
+        self.feedback_label.pack(pady=5)
+        self.save_button = ctk.CTkButton(self,text="Save Changes", command=self.updateAppointment)
+        self.save_button.pack(pady=5)
+        self.delete_button = ctk.CTkButton(self,text="Cancel Appointment",command=self.deleteAppointment)
+        self.delete_button.pack(pady=5)
+        self.back_button = ctk.CTkButton( self, text="Back",command=self.back)
+        self.back_button.pack(pady=20)
+
+    def loadAppointment(self, appointmentID):
+        self.appointmentID = appointmentID
+
+        appointment = appointments.getAppointmentByID(appointmentID)
+        self.patientID = appointment[3]
+        self.staffID = appointment[4]
+        formattedDate = datetime.strptime(appointment[1],"%Y-%m-%d").strftime("%d/%m/%Y")
+        self.date_entry.delete(0, "end")
+        self.date_entry.insert(0, formattedDate)
+        self.time_entry.delete(0, "end")
+        self.time_entry.insert(0, appointment[2])
+        self.duration_menu.set(str(appointment[5]))
 
     def updateAppointment(self):
 
+        date = self.date_entry.get().strip()
+        time = self.time_entry.get().strip()
+        duration = int(self.duration_menu.get())
+
+        result = appointments.editAppointment(self.appointmentID,date,time,duration,self.patientID,self.staffID)
+
+        if result == "SUCCESSFUL":
+            self.feedback_label.configure(text="Appointment updated successfully",text_color="green")
+            self.app.manageAppointment_Frame.loadAllAppointments()
+
+        elif result == "INVALID DATE":
+            self.feedback_label.configure(text="Date must be DD/MM/YYYY", text_color="red")
+
+        elif result == "INVALID TIME":
+            self.feedback_label.configure(text="Time must be HH:MM",text_color="red" )
+
+        elif result == "CONFLICT":
+            self.feedback_label.configure(text="Appointment conflicts with another booking",text_color="red")
+        else:
+            self.feedback_label.configure(text="Database error",text_color="red")
 
     def deleteAppointment(self):
+        success = appointments.deleteAppointment(self.appointmentID)
+        if success:
+            self.app.manageAppointment_Frame.loadAllAppointments()
+            self.app.show_frame(self.app.manageAppointment_Frame)
+        else:
+            self.feedback_label.configure(text="Error deleting appointment",text_color="red")
 
     def back(self):
-        self.app.show_frame(self.app.dashboardFrame)
+        self.app.show_frame(self.app.manageAppointment_Frame)
 
 
 class RecallFrame(ctk.CTkFrame):
