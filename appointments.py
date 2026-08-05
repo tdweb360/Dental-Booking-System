@@ -53,7 +53,6 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
         existingEnd = existingStart + timedelta(minutes=each[1])
 
         if bookingStart < existingEnd and bookingEnd > existingStart:
-            print("Staff member already booked")
             return True
 
     #p
@@ -79,42 +78,28 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
         existingEnd = existingStart + timedelta(minutes=each[1])
 
         if bookingStart < existingEnd and bookingEnd > existingStart:
-            print("Patient already has an appointment at this time")
             return True
     return False
 
 
-def selectDuration():
-    valid = False
-
-    while not valid:
-        try:
-            duration = int(input("Enter duration (15, 30, 45, 60): "))
-
-            if duration in [15, 30, 45, 60]:
-                return duration
-            else:
-                print("Invalid duration")
-
-        except ValueError:
-            print("Invalid input")
 
 
 
 
-def editAppointment(appointmentID,date,time,duration,patientID, staffID):
+def editAppointment(appointmentID,date,time,duration,patientID, staffID,current_user):
     if not validateAppointmentDate(date):
         return "INVALID DATE"
     dbDate = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
     if not validateAppointmentTime(time):
         return "INVALID TIME"
     conflict = checkConflict(dbDate,time,duration,staffID,patientID,appointmentID)
+
     if conflict:
         return "CONFLICT"
     else:
-        return editAppointmentSQL(appointmentID,dbDate,time,duration,patientID,staffID)
+        return editAppointmentSQL(appointmentID,dbDate,time,duration,patientID,staffID,current_user)
 
-def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID):
+def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID, current_user):
     try:
         cursor.execute("""
         UPDATE Appointments_Table
@@ -125,22 +110,25 @@ def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID):
         WHERE AppointmentID = ?
         """, (date, time, duration, staffID, appointmentID))
         connect.commit()
-        # Logging.log_action(
-        #     current_user,
-        #     "EDIT_APPOINTMENT",
-        #     f"AppointmentID {appointmentID}, StaffID {staffID}"
-        # )
+        Logging.log_action(
+            current_user,
+            "EDIT_APPOINTMENT",
+            f"AppointmentID {appointmentID}, StaffID {staffID}")
         return "SUCCESSFUL"
     except:
         return "UNSUCCESSFUL"
 
 
-def deleteAppointment(appointmentID):
+def deleteAppointment(appointmentID,current_user):
     cursor.execute("""
     DELETE FROM Appointments_Table
     WHERE AppointmentID = ?
     """, (appointmentID,))
     connect.commit()
+    Logging.log_action(
+        current_user,
+        "DELETE_APPOINTMENT",
+        f"AppointmentID {appointmentID}")
     return True
 
 

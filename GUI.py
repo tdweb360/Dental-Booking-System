@@ -684,6 +684,9 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         ctk.CTkLabel(self, text="Duration").pack()
         self.duration_menu = ctk.CTkOptionMenu(self, values=["15", "30", "45", "60"])
         self.duration_menu.pack(pady=5)
+        ctk.CTkLabel(self, text="Staff").pack()
+        self.staff_menu = ctk.CTkOptionMenu(self, values=["Select Staff"])
+        self.staff_menu.pack(pady=5)
         self.feedback_label = ctk.CTkLabel(self, text="")
         self.feedback_label.pack(pady=5)
         self.save_button = ctk.CTkButton(self,text="Save Changes", command=self.updateAppointment)
@@ -692,13 +695,25 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.delete_button.pack(pady=5)
         self.back_button = ctk.CTkButton( self, text="Back",command=self.back)
         self.back_button.pack(pady=20)
+        self.staff_lookup = {}
+        StaffMembers = staff.getAllStaff()
+        names = []
+        for member in StaffMembers:
+            staffID = member[0]
+            fullName = member[1] + " " + member[2]
+            names.append(fullName)
+            self.staff_lookup[fullName] = staffID
+        self.staff_menu.configure(values=names)
 
     def loadAppointment(self, appointmentID):
         self.appointmentID = appointmentID
 
+
         appointment = appointments.getAppointmentByID(appointmentID)
         self.patientID = appointment[3]
         self.staffID = appointment[4]
+        member = staff.getStaffByID(self.staffID)
+        self.staff_menu.set(f"{member[1]} {member[2]}")
         formattedDate = datetime.strptime(appointment[1],"%Y-%m-%d").strftime("%d/%m/%Y")
         self.date_entry.delete(0, "end")
         self.date_entry.insert(0, formattedDate)
@@ -711,8 +726,9 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         date = self.date_entry.get().strip()
         time = self.time_entry.get().strip()
         duration = int(self.duration_menu.get())
-
-        result = appointments.editAppointment(self.appointmentID,date,time,duration,self.patientID,self.staffID)
+        selectedStaff = self.staff_menu.get()
+        staffID = self.staff_lookup[selectedStaff]
+        result = appointments.editAppointment(self.appointmentID,date,time,duration,self.patientID,staffID,self.app.current_user)
 
         if result == "SUCCESSFUL":
             self.feedback_label.configure(text="Appointment updated successfully",text_color="green")
@@ -730,12 +746,28 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Database error",text_color="red")
 
     def deleteAppointment(self):
-        success = appointments.deleteAppointment(self.appointmentID)
+        self.confirm_window = ctk.CTkToplevel(self)
+        self.confirm_window.title("Confirm Delete")
+        self.confirm_window.geometry("300x150")
+
+        self.confirm_window.lift()
+        self.confirm_window.focus_force()
+        self.confirm_window.grab_set()
+        self.confirm_window.resizable(False, False)
+
+        ctk.CTkLabel(self.confirm_window, text="Are you sure you want to delete this appointment?").pack(pady=20)
+        ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
+        ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
+
+    def confirmDelete(self):
+        success = appointments.deleteAppointment(self.appointmentID,self.app.current_user)
         if success:
+            self.confirm_window.destroy()
             self.app.manageAppointment_Frame.loadAllAppointments()
             self.app.show_frame(self.app.manageAppointment_Frame)
         else:
-            self.feedback_label.configure(text="Error deleting appointment",text_color="red")
+            self.feedback_label.configure(text="Error deleting appointment", text_color="red")
+
 
     def back(self):
         self.app.show_frame(self.app.manageAppointment_Frame)
@@ -919,12 +951,28 @@ class StaffDetailsFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Database error",text_color="red")
 
     def deleteStaff(self):
-        result = staff.deleteStaff(self.staffID,self.app.current_user)
+        self.confirm_window = ctk.CTkToplevel(self)
+        self.confirm_window.title("Confirm Delete")
+        self.confirm_window.geometry("300x150")
+
+        self.confirm_window.lift()
+        self.confirm_window.focus_force()
+        self.confirm_window.grab_set()
+        self.confirm_window.resizable(False, False)
+
+        ctk.CTkLabel(self.confirm_window, text="Are you sure you want to delete this staff member?").pack(pady=20)
+        ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
+        ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
+
+    def confirmDelete(self):
+        result = staff.deleteStaff(self.staffID, self.app.current_user)
         if result == "SUCCESS":
+            self.confirm_window.destroy()
             self.app.staff_frame.searchStaff()
             self.app.show_frame(self.app.staff_frame)
         else:
-            self.feedback_label.configure(text="Database error",text_color="red")
+            self.feedback_label.configure(text="Error deleting staff member", text_color="red")
+
 
     def resetPassword(self):
         self.popup = ctk.CTkToplevel(self)

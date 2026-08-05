@@ -8,48 +8,6 @@ from patients import validateFNandSN
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 
-
-def addStaff(current_user):
-
-    confirm = False
-    attempts = 0
-    while confirm == False and attempts < 5:
-        firstname, surname = patients._validateFNandSN()
-        username = createUsername()
-        password = createPass()
-        hashed_pass = hashpass(password)
-        role = roleselect()
-        print("\nYou entered:\nName:", firstname, surname,
-              "\nUsername:", username,
-              "\nRole:", role)
-        answer = input("Are these details correct?:  ").strip().lower()
-
-        if answer in ["y", "yes"]:
-            confirm = True
-        else:
-            attempts += 1
-    if attempts == 5:
-        print("Too many failed attempts")
-        return
-    try:
-        cursor.execute("""
-        INSERT INTO Staff_Table (FirstName, Surname, Username, Password_Hash, Staff_Role) 
-        VALUES (?,?,?,?,?)
-            """, (firstname, surname, username, hashed_pass, role,))
-        connect.commit()
-        cursor.execute("""
-        SELECT last_insert_rowid()
-        """)
-        staffID = cursor.fetchone()[0]
-        Logging.log_action(
-            current_user,
-            "CREATE_STAFF",
-            f"StaffID {staffID}, Username {username}"
-        )
-
-    except:
-        print("database error")
-
 def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
     if not patients.validateFNandSN(firstname, surname):
         return "INVALID FIRST NAME OR SURNAME"
@@ -382,22 +340,6 @@ def resetPasswordGUI(staffID,password,confirmPassword,current_user):
         return "DATABASE_ERROR"
 
 
-def searchStaff():
-    valid = False
-    while not valid:
-        try:
-            choice = int(input("Do you want to search by:"
-                               "\n\n1. Staff Role"
-                               "\n2. Name"
-                               "\n\n>> "))
-            if choice == 1:
-                return searchStaffRole()
-            elif choice == 2:
-                return searchStaffName()
-            else:
-                print("Not a valid option")
-        except ValueError:
-            print("Must be an integer")
 
 def searchStaffRole():
     valid = False
