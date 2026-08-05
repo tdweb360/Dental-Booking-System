@@ -4,6 +4,7 @@ import appointments
 import authentication
 import Logging
 import patients
+import Recalls
 from datetime import datetime
 class App(ctk.CTk):
 
@@ -144,6 +145,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.staff_frame)
 
     def open_recall_frame(self):
+        self.app.recall_frame.loadRecalls()
         self.app.show_frame(self.app.recall_frame)
 
     def logout(self):
@@ -470,6 +472,8 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.book_button.pack(pady=7)
         ctk.CTkButton(self,text="Back",command=self.back).pack(padx=20)
 
+
+
     def loadPatient(self, patientID):
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
@@ -477,8 +481,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
 
     def chooseSlot(self, slot):
         self.selected_slot = slot
-        self.selected_slot_label.configure(
-            text=f"Selected Slot: {slot}")
+        self.selected_slot_label.configure(text=f"Selected Slot: {slot}")
 
     def checkDay(self):
         from datetime import datetime, timedelta
@@ -1011,10 +1014,80 @@ class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
-        ctk.CTkLabel(self,text="Recall Management").pack(pady=20)
-        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
+        ctk.CTkLabel(self,text="Recall Management",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+        self.results_frame = ctk.CTkScrollableFrame(self, width=900, height=500)
+        self.results_frame.pack(fill="both", expand=True, padx=20)
+        self.header = ctk.CTkFrame(self.results_frame)
+        self.header.pack(fill="x")
+        ctk.CTkLabel(self.header,text="Recall ID",width=80).pack(side="left")
+        ctk.CTkLabel(self.header,text="Patient",width=200).pack(side="left")
+        ctk.CTkLabel(self.header,text="Suggested Date",width=140).pack(side="left")
+        ctk.CTkLabel(self.header,text="Priority",width=120).pack(side="left")
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+        self.back_button.pack(pady=20)
+
+    def loadRecalls(self):
+        for widget in self.results_frame.winfo_children():
+            widget.destroy()
+        self.header = ctk.CTkFrame(self.results_frame)
+        self.header.pack(fill="x")
+        ctk.CTkLabel(self.header, text="Recall ID", width=80).pack(side="left")
+        ctk.CTkLabel(self.header, text="Patient", width=200).pack(side="left")
+        ctk.CTkLabel(self.header, text="Suggested Date", width=140).pack(side="left")
+        ctk.CTkLabel(self.header, text="Priority", width=120).pack(side="left")
+        recalls = Recalls.getActiveRecalls()
+
+        if len(recalls) == 0:
+            ctk.CTkLabel(self.results_frame,text="No active recalls").pack(pady=20)
+            return
+
+        for record in recalls:
+            self.createRecallRow(record)
+
+    def createRecallRow(self, recallData):
+
+        from functools import partial
+
+        recallID = recallData[0]
+        patientID = recallData[1]
+        name = f"{recallData[2]} {recallData[3]}"
+        priority = recallData[5]
+
+        suggestedDate = datetime.strptime(recallData[4],"%Y-%m-%d").strftime("%d/%m/%Y")
+
+        row = ctk.CTkFrame(self.results_frame)
+        row.pack(fill="x", pady=2)
+
+        ctk.CTkLabel(row,text=recallID,width=80).pack(side="left", padx=5)
+        ctk.CTkLabel(row,text=name,width=200).pack(side="left", padx=5)
+        ctk.CTkLabel(row,text=suggestedDate,width=140).pack(side="left", padx=5)
+        priority_menu = ctk.CTkOptionMenu(row,values=["1", "2", "3", "4", "5"])
+        priority_menu.set(str(priority))
+        ctk.CTkButton(row,text="Book",command=partial(self.bookRecall,patientID,suggestedDate,recallID)).pack(side="right", padx=5)
+        ctk.CTkButton(row,text="Complete",command=partial(self.completeRecall,recallID)).pack(side="right", padx=5)
+        priority_menu.pack(side="left", padx=5)
+        ctk.CTkButton(row,text="Save",width=60,command=partial(self.savePriority,recallID,priority_menu )).pack(side="right", padx=5)
+
+    def bookRecall(self, patientID, suggestedDate, recallID):
+        self.app.new_appointment_frame.loadPatient(patientID)
+        self.app.new_appointment_frame.date_entry.delete( 0, "end")
+        self.app.new_appointment_frame.date_entry.insert(0,suggestedDate)
+        self.app.show_frame(self.app.new_appointment_frame)
+
+    def completeRecall(self, recallID):
+        Recalls.completeRecall(recallID)
+        self.loadRecalls()
+
+    def savePriority(self, recallID, priority_menu):
+        priority = int(priority_menu.get())
+        Recalls.updatePriority(recallID,priority)
+        self.loadRecalls()
+
 
     def back(self):
         self.app.show_frame(self.app.dashboardFrame)
+
+
+
 app = App()
 app.mainloop()

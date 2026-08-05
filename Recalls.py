@@ -66,8 +66,8 @@ def generateRecalls():
     connect.commit()
 
 
-def viewRecalls(current_user):
-    #inner join = combine records from two tables whenever there are matching values in a field common to both tables
+def getActiveRecalls():
+    generateRecalls()
     cursor.execute("""
     SELECT RecallID,
            Patients_Table.PatientID,
@@ -76,24 +76,12 @@ def viewRecalls(current_user):
            SuggestedDate,
            Priority
     FROM Recall_Table
-    INNER JOIN Patients_Table  
+    INNER JOIN Patients_Table
     ON Recall_Table.PatientID = Patients_Table.PatientID
     WHERE Completed = 0
     ORDER BY Priority ASC, SuggestedDate ASC
     """)
-    results = cursor.fetchall()
-    if len(results) == 0:
-        print("No recalls found")
-    else:
-        for r in results:
-            print(
-                f"\nRecallID: {r[0]}"
-                f" | PatientID: {r[1]}"
-                f" | Name: {r[2]} {r[3]}"
-                f" | Suggested Date: {r[4]}"
-                f" | Priority: {r[5]}"
-            )
-        manageRecalls(current_user)
+    return cursor.fetchall()
 
 def manageRecalls(current_user):
     valid = False
@@ -173,96 +161,20 @@ def bookRecall(current_user):
     except ValueError:
         print("Invalid Input")
 
-def changePriority():
-    valid = False
-    while valid == False:
-        try:
-            recallID = int(input(
-                "Enter Recall ID: "
-            ))
-            priority = int(input(
-                "Enter Priority (1-5): "
-            ))
-            if 1 <= priority <= 5:
-                cursor.execute("""
-                UPDATE Recall_Table
-                SET Priority = ?
-                WHERE RecallID = ?
-                """, (
-                    priority,
-                    recallID
-                ))
-                connect.commit()
-                print("Priority updated")
-                valid = True
-            else:
-                print("Priority must be between 1 and 5")
-
-        except ValueError:
-            print("Invalid Input")
-
-
-def completeRecall():
-    try:
-        recallID = int(input(
-            "Enter Recall ID: "
-        ))
-        cursor.execute("""
-        UPDATE Recall_Table
-        SET Completed = 1
-        WHERE RecallID = ?
-        """, (recallID,))
-        connect.commit()
-        print("Recall completed")
-    except ValueError:
-        print("Invalid Input")
-
-
-def testRecalls():
-
-    print("\n===== TESTING RECALL LIST =====\n")
-
+def updatePriority(recallID, priority):
     cursor.execute("""
-    SELECT *
-    FROM Recall_Table
-    """)
+    UPDATE Recall_Table
+    SET Priority = ?
+    WHERE RecallID = ?
+    """, (priority, recallID))
+    connect.commit()
 
-    recalls = cursor.fetchall()
-
-    print("Recall records found:", len(recalls))
-
-    for r in recalls:
-        print(r)
-
-    print("\n===== TESTING ACTIVE RECALLS =====\n")
-
+def completeRecall(recallID):
     cursor.execute("""
-    SELECT RecallID,
-           Patients_Table.PatientID,
-           Patients_Table.FirstName,
-           Patients_Table.Surname,
-           SuggestedDate,
-           Priority
-    FROM Recall_Table
+    UPDATE Recall_Table
+    SET Completed = 1
+    WHERE RecallID = ?
+    """, (recallID,))
+    connect.commit()
 
-    INNER JOIN Patients_Table
-    ON Recall_Table.PatientID = Patients_Table.PatientID
 
-    WHERE Completed = 0
-    ORDER BY Priority ASC, SuggestedDate ASC
-    """)
-
-    results = cursor.fetchall()
-
-    print("Active recalls:", len(results))
-
-    for r in results:
-        print(
-            f"RecallID: {r[0]}"
-            f" | PatientID: {r[1]}"
-            f" | Name: {r[2]} {r[3]}"
-            f" | Suggested Date: {r[4]}"
-            f" | Priority: {r[5]}"
-        )
-
-    print("\n===== TEST COMPLETE =====")
