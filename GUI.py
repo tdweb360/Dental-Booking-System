@@ -29,6 +29,7 @@ class App(ctk.CTk):
         self.staff_frame = StaffManagementFrame(self)
         self.staffDetails_frame = StaffDetailsFrame(self)
         self.recall_frame = RecallFrame(self)
+        self.audit_frame = AuditLogFrame(self)
 
 
 
@@ -43,7 +44,8 @@ class App(ctk.CTk):
             self.appointmentDetails_frame,
             self.staff_frame,
             self.staffDetails_frame,
-            self.recall_frame
+            self.recall_frame,
+            self.audit_frame
         ]
 
         self.show_frame(self.loginFrame)
@@ -100,8 +102,11 @@ class LoginFrame(ctk.CTkFrame):
             self.app.current_role = role
             if role == "Manager":
                 self.app.dashboardFrame.staff_button.pack(pady=10)
+                self.app.dashboardFrame.audit_button.pack(pady = 10)
             else:
                 self.app.dashboardFrame.staff_button.pack_forget()
+                self.app.dashboardFrame.audit_button.pack_forget()
+
             self.app.current_user = username
             self.app.attempts = 0
             self.app.dashboardFrame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}",font= ctk.CTkFont(size=30, weight="bold"))
@@ -121,6 +126,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.appointment_button = ctk.CTkButton(self,text="Manage Appointments",command=self.open_appointment_frame)
         self.recall_button = ctk.CTkButton(self,text="View Recalls",command=self.open_recall_frame)
         self.staff_button = ctk.CTkButton(self,text="Staff Management",command=self.open_staff_frame)
+        self.audit_button = ctk.CTkButton(self, text="Audit Log",command=self.open_audit_frame)
 
         self.logout_button = ctk.CTkButton(self,text="Logout",command=self.logout)
 
@@ -148,16 +154,19 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.recall_frame.loadRecalls()
         self.app.show_frame(self.app.recall_frame)
 
+    def open_audit_frame(self):
+        self.app.audit_frame.loadLogs()
+
+        self.app.show_frame(self.app.audit_frame)
+
     def logout(self):
 
         login = self.app.loginFrame
 
         login.username_entry.delete(0, "end")
         login.password_entry.delete(0, "end")
-
         login.error_label.pack_forget()
         login.locked_label.pack_forget()
-
         self.app.show_frame(self.app.loginFrame)
 
 
@@ -1087,7 +1096,69 @@ class RecallFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.dashboardFrame)
 
+class AuditLogFrame(ctk.CTkFrame):
+
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        self.current_page = 1
+        self.records_per_page = 10
+        self.results = []
+
+        ctk.CTkLabel(self,text="Audit Log",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+        self.header = ctk.CTkFrame(self)
+        self.header.pack(fill="x", padx=20)
+        ctk.CTkLabel(self.header,text="User",width=140).pack(side="left")
+        ctk.CTkLabel(self.header,text="Action",width=150).pack(side="left")
+        ctk.CTkLabel(self.header,text="Details",width=300).pack(side="left")
+        ctk.CTkLabel(self.header,text="Timestamp",width=180).pack(side="left")
+        self.results_frame = ctk.CTkScrollableFrame( self,width=1000,height=500)
+        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+        self.navigation_frame = ctk.CTkFrame(self)
+        self.navigation_frame.pack(pady=10)
+        ctk.CTkButton(self.navigation_frame,text="Previous",command=self.previousPage).pack(side="left", padx=10)
+        self.page_label = ctk.CTkLabel(self.navigation_frame,text="Page 1")
+        self.page_label.pack(side="left", padx=10)
+        ctk.CTkButton(self.navigation_frame,text="Next",command=self.nextPage).pack(side="left", padx=10)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
 
+    def loadLogs(self):
+        self.results = Logging.getAuditLogs()
+        self.current_page = 1
+        self.displayResults()
+
+    def displayResults(self):
+        for w in self.results_frame.winfo_children():
+            w.destroy()
+        if len(self.results) == 0:
+            ctk.CTkLabel(self.results_frame,text="No audit records found",text_color="red").pack(pady=20)
+            self.page_label.configure(text="Page 1 of 1")
+            return
+        start = ( self.current_page - 1) * self.records_per_page
+
+        end = start + self.records_per_page
+        for log in self.results[start:end]:
+            row = ctk.CTkFrame(self.results_frame)
+            row.pack(fill="x", pady=2)
+            ctk.CTkLabel(row,text=log[1],width=140).pack(side="left")
+            ctk.CTkLabel(row,text=log[2],width=150).pack(side="left")
+            ctk.CTkLabel( row,text=log[3],width=300).pack(side="left")
+            ctk.CTkLabel(row,text=log[4],width=180).pack(side="left")
+
+        totalPages = max( 1,( len(self.results) + self.records_per_page - 1)// self.records_per_page)
+        self.page_label.configure(text=f"Page {self.current_page} of {totalPages}")
+
+    def nextPage(self):
+        if (self.current_page * self.records_per_page < len(self.results)):
+            self.current_page += 1
+            self.displayResults()
+
+    def previousPage(self):
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.displayResults()
+    def back(self):
+        self.app.show_frame(self.app.dashboardFrame)
 app = App()
 app.mainloop()
