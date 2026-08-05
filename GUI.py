@@ -517,7 +517,6 @@ class BookAppointmentFrame(ctk.CTkFrame):
             for Count in range(slots_needed):
                 slot_time = start_time + timedelta(minutes=Count * 15)
                 booked_slots.append(slot_time.strftime("%H:%M"))
-        print(booked_slots)
         selectedDuration = int(
             self.duration_menu.get())
         slotsNeeded = selectedDuration // 15
