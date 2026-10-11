@@ -501,7 +501,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
 
     def loadStaffMembers(self):
         self.loadStaffMembers()
-
+#
 
     def loadPatient(self, patientID):
         self.patientID = patientID
