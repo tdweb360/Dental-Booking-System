@@ -13,6 +13,12 @@ cursor.execute("PRAGMA foreign_keys = ON")
 
 
 def createAppointment(patientID,staffID,date,time,duration,current_user):
+    if not validateAppointmentDate(date):
+        return "INVALID DATE"
+    if not validateAppointmentTime(
+            time,
+            duration):
+        return "INVALID TIME"
     date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
 
     conflict = checkConflict(date,time,duration,staffID,patientID)
@@ -94,7 +100,7 @@ def editAppointment(appointmentID,date,time,duration,patientID, staffID,current_
     if not validateAppointmentDate(date):
         return "INVALID DATE"
     dbDate = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
-    if not validateAppointmentTime(time):
+    if not validateAppointmentTime(time, duration):
         return "INVALID TIME"
     conflict = checkConflict(dbDate,time,duration,staffID,patientID,appointmentID)
 
@@ -146,12 +152,15 @@ def validateAppointmentDate(date):
     except ValueError:
         return False
 
-def validateAppointmentTime(time):
+def validateAppointmentTime(time, duration):
     try:
         time = datetime.strptime(time, "%H:%M")
+        endTime = time + timedelta(minutes=duration)
         if not (9 <= time.hour < 17):
             return False
         if time.minute not in [0, 15, 30, 45]:
+            return False
+        if endTime > datetime.strptime("17:00", "%H:%M"):
             return False
         return True
     except ValueError:

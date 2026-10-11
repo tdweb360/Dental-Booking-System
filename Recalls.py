@@ -15,16 +15,15 @@ def generateRecalls():
     today = datetime.today().strftime("%Y-%m-%d")
 
     cursor.execute("""
-    SELECT AppointmentID,
-           PatientID,
-           Appointment_date
+    SELECT AppointmentID,PatientID,MAX(Appointment_date)
     FROM Appointments_Table
     WHERE Appointment_date < ?
+    GROUP BY PatientID
     """, (today,))
 
-    appointments = cursor.fetchall()
+    pastAppointments = cursor.fetchall()
 
-    for appointment in appointments:
+    for appointment in pastAppointments:
 
         appointmentID = appointment[0]
         patientID = appointment[1]

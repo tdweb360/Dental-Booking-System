@@ -166,8 +166,9 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.recall_frame)
 
     def open_audit_frame(self):
+        if self.app.current_role != "Manager":
+            return
         self.app.audit_frame.loadLogs()
-
         self.app.show_frame(self.app.audit_frame)
 
     def logout(self):
@@ -478,14 +479,13 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.staff_menu = ctk.CTkOptionMenu(self, values=["Select Staff"])
 
         self.staff_lookup = {}
-        StaffMembers = staff.getAllStaff()
         names = []
-        for e in StaffMembers:
-            StaffID = e[0]
-            FullName = e[1] + " " + e[2]
+        for member in staff.getAllStaff():
+            fullName = member[1] + " " + member[2]
+            names.append(fullName)
+            self.staff_lookup[fullName] = member[0]
 
-            names.append(FullName)
-            self.staff_lookup[FullName] = StaffID
+        self.staff_menu.configure(values=names)
         self.staff_menu.configure(values=names)
 
         self.patient_label.pack()
@@ -504,6 +504,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
 #
 
     def loadPatient(self, patientID):
+        self.loadStaffMembers()
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
         self.patient_label.configure(text=f"{patient[1]} {patient[2]}")
@@ -731,18 +732,18 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
         ctk.CTkButton(self.bottom_frame,text="Back",command=self.back).pack()
         self.staff_lookup = {}
-        StaffMembers = staff.getAllStaff()
+
+    def loadStaffMembers(self):
+        self.staff_lookup = {}
         names = []
-        for member in StaffMembers:
-            staffID = member[0]
+        for member in staff.getAllStaff():
             fullName = member[1] + " " + member[2]
             names.append(fullName)
-            self.staff_lookup[fullName] = staffID
+            self.staff_lookup[fullName] = member[0]
         self.staff_menu.configure(values=names)
 
     def loadAppointment(self, appointmentID):
-        self.appointmentID = appointmentID
-
+        self.loadStaffMembers()
 
         appointment = appointments.getAppointmentByID(appointmentID)
         self.patientID = appointment[3]

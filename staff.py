@@ -13,6 +13,8 @@ cursor = connect.cursor()
 cursor.execute("PRAGMA foreign_keys = ON")
 
 def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
+    if not checkManager(current_user):
+        return "NOT_AUTHORISED"
     if not patients.validateFNandSN(firstname, surname):
         return "INVALID FIRST NAME OR SURNAME"
     if not createUsername(username):
@@ -91,9 +93,16 @@ def createPass(password, pass2):
 
 
 
-
-def checkManager():
-    return True
+def checkManager(username):
+    cursor.execute(
+        """
+        SELECT Staff_Role
+        FROM Staff_Table
+        WHERE Username = ?
+        """,
+        (username,))
+    result = cursor.fetchone()
+    return (result is not None and result[0] == "Manager")
 
 def createInitialManager():
     cursor.execute("""
@@ -135,6 +144,8 @@ def hashpass(password):
 
 
 def deleteStaff(staffID, current_user):
+    if not checkManager(current_user):
+        return "NOT_AUTHORISED"
     try:
         cursor.execute("""
         DELETE FROM Staff_Table
@@ -150,6 +161,8 @@ def deleteStaff(staffID, current_user):
         return "DATABASE_ERROR"
 
 def updateStaff(staffID,firstname,surname,username,role,current_user):
+    if not checkManager(current_user):
+        return "NOT_AUTHORISED"
     if not patients.validateFNandSN(
             firstname,
             surname):
@@ -187,6 +200,8 @@ def updateStaff(staffID,firstname,surname,username,role,current_user):
         return "DATABASE_ERROR"
 
 def resetPasswordGUI(staffID,password,confirmPassword,current_user):
+    if not checkManager(current_user):
+        return "NOT_AUTHORISED"
     passResult = createPass(password,confirmPassword)
     if passResult != "VALID":
         return passResult
