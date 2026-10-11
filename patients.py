@@ -8,7 +8,7 @@ import Logging
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
-
+cursor.execute("PRAGMA foreign_keys = ON")
 
 def validateFNandSN(firstname, surname):
     pattern = r"^[A-Za-z'-]+$"

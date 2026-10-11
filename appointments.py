@@ -9,6 +9,7 @@ import staff
 import Logging
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
 
 
 def createAppointment(patientID,staffID,date,time,duration,current_user):

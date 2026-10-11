@@ -6,6 +6,7 @@ from datetime import datetime
 
 connect = sqlite3.connect("database.db")
 cursor = connect.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
 
 def log_action(username, action, details):
 
@@ -31,3 +32,6 @@ def getAuditLogs():
     ORDER BY LogID DESC
     """)
     return cursor.fetchall()
+
+
+

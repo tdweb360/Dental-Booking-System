@@ -7,6 +7,7 @@ import appointments
 from datetime import datetime, timedelta
 connect = sqlite3.connect("database.db")
 cursor = connect.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
 
 
 def generateRecalls():

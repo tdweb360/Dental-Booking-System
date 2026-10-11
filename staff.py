@@ -10,6 +10,7 @@ import Logging
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
 
 def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
     if not patients.validateFNandSN(firstname, surname):

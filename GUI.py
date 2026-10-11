@@ -13,9 +13,11 @@ class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-
         self.title("Dental Booking System")
-        self.geometry("1200x1000")
+
+        self.after(10, self.maximiseWindow)
+
+
         staff.createInitialManager()
         self.attempts = 0
 
@@ -53,6 +55,9 @@ class App(ctk.CTk):
 
         self.show_frame(self.loginFrame)
 
+    def maximiseWindow(self):
+        self.state("zoomed")
+
     def show_frame(self, frame):
         for f in self.frames:
             f.pack_forget()
@@ -72,8 +77,8 @@ class LoginFrame(ctk.CTkFrame):
         self.error_label = ctk.CTkLabel(self,text="Username or password is incorrect",text_color="red")
         self.locked_label = ctk.CTkLabel(self,text="Too many attempts. Restart application",text_color="red")
 
-
-        self.username_entry.pack(pady=10)
+        top_padding = (self.app.winfo_screenheight() // 4) - (self.app.winfo_screenheight() // 16)
+        self.username_entry.pack(pady=(top_padding, 10))
         self.password_entry.pack(pady=10)
         self.login_button.pack(pady=10)
 
@@ -357,14 +362,21 @@ class PatientDetailsFrame(ctk.CTkFrame):
     def deletePatient(self):
         self.confirm_window = ctk.CTkToplevel(self)
         self.confirm_window.title("Confirm Delete")
-        self.confirm_window.geometry("300x150")
+        self.confirm_window.geometry("350x200")
 
         self.confirm_window.lift()
         self.confirm_window.focus_force()
         self.confirm_window.grab_set()
         self.confirm_window.resizable(False, False)
-
-        ctk.CTkLabel(self.confirm_window, text="Are you sure you want to delete this patient?").pack(pady=20)
+        firstname = self.firstname_entry.get()
+        surname = self.surname_entry.get()
+        ctk.CTkLabel(
+            self.confirm_window,
+            text=(
+                f"Are you sure you want to delete:\n\n"
+                f"{firstname} {surname}\n"
+                f"Patient ID: {self.patientID}\n\n"
+                f"This action cannot be undone.")).pack(pady=20)
         ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
         ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
 
@@ -617,8 +629,11 @@ class ManageAppointmentFrame(ctk.CTkFrame):
         self.page_label = ctk.CTkLabel(self.navigation_frame, text="Page 1")
         self.page_label.pack(side="left", padx=10)
         ctk.CTkButton(self.navigation_frame, text="Next", command=self.nextPage).pack(side="left", padx=10)
-        ctk.CTkButton(self, text="Back", command=self.back).pack(pady=20)
+        self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
+        self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
+        self.back_button = ctk.CTkButton(self.bottom_frame,text="Back",command=self.back)
 
+        self.back_button.pack()
         self.loadAllAppointments()
 
     def loadAllAppointments(self):
@@ -707,8 +722,9 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.save_button.pack(pady=5)
         self.delete_button = ctk.CTkButton(self,text="Cancel Appointment",command=self.deleteAppointment)
         self.delete_button.pack(pady=5)
-        self.back_button = ctk.CTkButton( self, text="Back",command=self.back)
-        self.back_button.pack(pady=20)
+        self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
+        self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
+        ctk.CTkButton(self.bottom_frame,text="Back",command=self.back).pack()
         self.staff_lookup = {}
         StaffMembers = staff.getAllStaff()
         names = []
@@ -762,14 +778,25 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
     def deleteAppointment(self):
         self.confirm_window = ctk.CTkToplevel(self)
         self.confirm_window.title("Confirm Delete")
-        self.confirm_window.geometry("300x150")
-
+        self.confirm_window.geometry("380x250")
         self.confirm_window.lift()
         self.confirm_window.focus_force()
         self.confirm_window.grab_set()
         self.confirm_window.resizable(False, False)
 
-        ctk.CTkLabel(self.confirm_window, text="Are you sure you want to delete this appointment?").pack(pady=20)
+        date = self.date_entry.get()
+        time = self.time_entry.get()
+        duration = self.duration_menu.get()
+
+        ctk.CTkLabel(
+            self.confirm_window,
+            text=(
+                f"Are you sure you want to delete:\n\n"
+                f"Appointment ID: {self.appointmentID}\n"
+                f"Date: {date}\n"
+                f"Time: {time}\n"
+                f"Duration: {duration} mins\n\n"
+                f"This action cannot be undone." )).pack(pady=20)
         ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
         ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
 
@@ -967,14 +994,24 @@ class StaffDetailsFrame(ctk.CTkFrame):
     def deleteStaff(self):
         self.confirm_window = ctk.CTkToplevel(self)
         self.confirm_window.title("Confirm Delete")
-        self.confirm_window.geometry("300x150")
+        self.confirm_window.geometry("350x220")
 
         self.confirm_window.lift()
         self.confirm_window.focus_force()
         self.confirm_window.grab_set()
         self.confirm_window.resizable(False, False)
 
-        ctk.CTkLabel(self.confirm_window, text="Are you sure you want to delete this staff member?").pack(pady=20)
+        firstname = self.firstname_entry.get()
+        surname = self.surname_entry.get()
+        username = self.username_entry.get()
+        ctk.CTkLabel(
+            self.confirm_window,
+            text=(
+                f"Are you sure you want to delete:\n\n"
+                f"{firstname} {surname}\n"
+                f"Username: {username}\n"
+                f"Staff ID: {self.staffID}\n\n"
+                f"This action cannot be undone.")).pack(pady=20)
         ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
         ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
 
