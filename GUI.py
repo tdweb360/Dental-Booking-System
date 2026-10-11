@@ -103,7 +103,10 @@ class LoginFrame(ctk.CTkFrame):
 
         if result is None:
             self.app.attempts += 1
-            self.error_label.pack(pady=5)
+            if self.app.attempts >= 3:
+                self.locked_label.pack(pady=20)
+            else:
+                self.error_label.pack(pady=5)
 
         else:
             staff_id, role, username = result
@@ -496,6 +499,8 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.book_button.pack(pady=7)
         ctk.CTkButton(self,text="Back",command=self.back).pack(padx=20)
 
+    def loadStaffMembers(self):
+        self.loadStaffMembers()
 
 
     def loadPatient(self, patientID):

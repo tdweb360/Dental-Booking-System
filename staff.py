@@ -42,6 +42,16 @@ def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
     except:
         return "DATABASE ERROR"
 
+def validUsernameFormat(username):
+
+    if not (4 <= len(username) <= 20):
+        return False
+
+    return re.match(
+        r"^[A-Za-z0-9._]+$",
+        username
+    ) is not None
+
 def createUsername(username):
 
     pattern = r"^[A-Za-z0-9._]+$"
@@ -144,6 +154,9 @@ def updateStaff(staffID,firstname,surname,username,role,current_user):
             firstname,
             surname):
         return "INVALID_NAME"
+
+    if not validUsernameFormat(username):
+        return "INVALID_USERNAME"
 
     try:
         cursor.execute("""

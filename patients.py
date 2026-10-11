@@ -58,6 +58,7 @@ def search_patients(name="", phone="", dob=""):
             f"%{name}%"
         ])
     if phone:
+        phone = phone.replace(" ", "")
         query += """
             AND Phone_Num LIKE ?
         """
@@ -112,6 +113,7 @@ def updatePatient(patientID, firstname, surname, dob, phone, current_user):
     if not validateDOB(dob):
         return "INVALID_DOB"
     dob = datetime.strptime(dob,"%d/%m/%Y").strftime("%Y-%m-%d")
+    phone = phone.replace(" ", "")
     if not validatePhoneNUM(phone):
         return "INVALID_PHONE"
     try:
@@ -139,6 +141,7 @@ def addPatient(firstname, surname, dob, phone, current_user):
     if not validateDOB(dob):
         return "INVALID_DOB"
     dob = datetime.strptime(dob, "%d/%m/%Y").strftime("%Y-%m-%d")
+    phone = phone.replace(" ", "")
     if not validatePhoneNUM(phone):
         return "INVALID_PHONE"
     try:

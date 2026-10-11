@@ -19,7 +19,11 @@ def login(username,password):
     """, (username,))
     result = cursor.fetchone()
     if not result:
-        print("")
+        Logging.log_action(
+            username,
+            "LOGIN_FAILED",
+            "Unknown username"
+        )
     else:
         staffID = result[0]
         storedHash = result[1]
