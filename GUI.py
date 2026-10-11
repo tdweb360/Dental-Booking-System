@@ -1,3 +1,6 @@
+
+# main GUI window, every other file branches off of this file
+
 import customtkinter as ctk
 import staff
 import appointments
@@ -13,7 +16,7 @@ class App(ctk.CTk):
 
         self.title("Dental Booking System")
         self.geometry("1200x1000")
-
+        staff.createInitialManager()
         self.attempts = 0
 
         self.loginFrame = LoginFrame(self)
@@ -56,7 +59,7 @@ class App(ctk.CTk):
 
         frame.pack(fill="both",expand=True)
 
-
+# all code relating to the login page
 class LoginFrame(ctk.CTkFrame):
 
     def __init__(self, app):
@@ -112,7 +115,7 @@ class LoginFrame(ctk.CTkFrame):
             self.app.dashboardFrame.welcome_label.configure(text=f"Welcome {username}\nRole: {role}",font= ctk.CTkFont(size=30, weight="bold"))
             self.app.show_frame(self.app.dashboardFrame)
 
-
+# all code relating to the main dashboard
 class DashboardFrame(ctk.CTkFrame):
 
     def __init__(self, app):
@@ -392,7 +395,6 @@ class AddPatientFrame(ctk.CTkFrame):
         self.phone_entry = ctk.CTkEntry(self)
         self.feedback_label = ctk.CTkLabel(self, text="")
         self.register_button = ctk.CTkButton(self, text="Register Patient", command=self.registerPatient)
-        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
         self.firstname_label.pack()
         self.firstname_entry.pack(pady=5)
@@ -407,6 +409,7 @@ class AddPatientFrame(ctk.CTkFrame):
         self.phone_entry.pack(pady=5)
         self.register_button.pack(pady=10)
         self.feedback_label.pack(pady=5)
+        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
 
     def registerPatient(self):
 

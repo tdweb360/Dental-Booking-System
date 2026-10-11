@@ -1,9 +1,12 @@
+
+# file contains all staff logic and SQL statements related to staff and managing them
+
+
 import patients
 import sqlite3
 import re
 import bcrypt
 import Logging
-from patients import validateFNandSN
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -87,19 +90,12 @@ def createInitialManager():
     FROM Staff_Table
     WHERE Staff_Role = 'Manager'
     """)
-
     result = cursor.fetchone()
-
     if result[0] == 0:
-        print("No manager account found.")
-        print("Create an initial manager account.\n")
-
-        firstname, surname = patients._validateFNandSN()
-        username = createUsername()
-        password = createPass()
-
+        firstname, surname = "INITIAL", "MANAGER"
+        username = "admin"
+        password = "Admin123!"
         hashedPassword = hashpass(password)
-
         cursor.execute("""
         INSERT INTO Staff_Table
         (FirstName, Surname, Username, Password_Hash, Staff_Role)
@@ -109,8 +105,7 @@ def createInitialManager():
             surname,
             username,
             hashedPassword,
-            "Manager"
-        ))
+            "Manager"))
 
         connect.commit()
         Logging.log_action(

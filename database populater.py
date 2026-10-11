@@ -1,3 +1,6 @@
+
+# temporary file that fills database for testing
+
 # import sqlite3
 # from datetime import datetime
 # import random
@@ -34,7 +37,7 @@
 # # print("✅ Database populated with test patients")
 # # import sqlite3
 # # import random
-# #
+# # #
 # connect = sqlite3.connect('database.db')
 # cursor = connect.cursor()
 #
@@ -48,8 +51,8 @@
 #     "15:00", "15:15", "15:30", "15:45",
 #     "16:00", "16:15", "16:30"
 # ]
-#
-# durations = [15, 30, 45, 60]
+# #
+# # durations = [15, 30, 45, 60]
 #
 # # example dates
 # dates = [

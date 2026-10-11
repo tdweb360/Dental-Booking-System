@@ -1,3 +1,7 @@
+
+# file contains all recall logic and SQL statements related to recalls and managing them
+
+
 import sqlite3
 import appointments
 from datetime import datetime, timedelta
@@ -62,7 +66,6 @@ def generateRecalls():
                 suggestedDate,
                 5
             ))
-            print(f"Created recall for PatientID {patientID}")
     connect.commit()
 
 
@@ -83,83 +86,8 @@ def getActiveRecalls():
     """)
     return cursor.fetchall()
 
-def manageRecalls(current_user):
-    valid = False
-    while not valid:
-        try:
-            choice = int(input(
-                "\n1. Change Priority"
-                "\n2. Book Recall"
-                "\n3. Complete Recall Without Booking Follow-Up"
-                "\n4. Exit\n\n"
-                ">> "
-            ))
-            if choice == 1:
-                changePriority()
-            elif choice == 2:
-                bookRecall(current_user)
-            elif choice == 3:
-                confirm = (input("Are you sure")).lower().strip()
-                if confirm in ["yes","y"]:
-                    completeRecall()
-                else:
-                    print("Recall left active")
-            elif choice == 4:
-                valid = True
-            else:
-                print("Not a valid option")
-        except ValueError:
-            print("Invalid Input")
 
-def bookRecall(current_user):
-    try:
-        recallID = int(input(
-            "Enter Recall ID: "
-        ))
-        cursor.execute("""
-        SELECT PatientID,
-               SuggestedDate
-        FROM Recall_Table
-        WHERE RecallID = ?
-        """, (recallID,))
-        result = cursor.fetchone()
-        if result is None:
-            print("Recall not found")
-            return
-        patientID = result[0]
-        suggestedDate = result[1]
-        valid = False
-        while valid == False:
-            try:
-                choice = int(input(
-                    "\n1. Use Suggested Date"
-                    "\n2. Book Earlier/Later"
-                    "\n3. Exit\n\n"
-                    ">> "
-                ))
-                if choice == 1:
-                    successful = appointments.bookAppointment(patientID,current_user,suggestedDate)
-                elif choice == 2:
-                    successful = appointments.bookAppointment(patientID,current_user)
-                elif choice == 3:
-                    return
-                else:
-                    print("Not a valid option")
-                    continue
 
-                if successful:
-                    cursor.execute("""
-                    UPDATE Recall_Table
-                    SET Completed = 1
-                    WHERE RecallID = ?
-                    """, (recallID,))
-                    connect.commit()
-                    print("Recall completed")
-                    valid = True
-            except ValueError:
-                print("Error")
-    except ValueError:
-        print("Invalid Input")
 
 def updatePriority(recallID, priority):
     cursor.execute("""

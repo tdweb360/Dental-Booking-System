@@ -1,3 +1,6 @@
+
+# file manages all appointment logic and SQL queries related to appointments
+
 import sqlite3
 from datetime import datetime, timedelta
 

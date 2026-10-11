@@ -1,2 +1,0 @@
-import Recalls
-Recalls.testRecalls()

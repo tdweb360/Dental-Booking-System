@@ -1,7 +1,9 @@
+
+# file contains all patient logic and SQL statements related to patients and managing them
+
 import sqlite3
 from datetime import datetime
 import re
-import appointments
 import Logging
 
 connect = sqlite3.connect('database.db')

@@ -1,3 +1,6 @@
+
+# file contains all logging SQL statements and logic
+
 import sqlite3
 from datetime import datetime
 

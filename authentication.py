@@ -1,3 +1,7 @@
+
+# file manages all authentication logic and SQL queries related to authentication
+
+
 import sqlite3
 
 import bcrypt

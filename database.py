@@ -1,3 +1,6 @@
+
+# file creates all tables required for the system if they do not already exist
+
 import sqlite3
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -41,6 +44,7 @@ CREATE TABLE IF NOT EXISTS Staff_Table(
 )
 """)
 
+## Logging Table ##
 cursor.execute("""CREATE TABLE IF NOT EXISTS AuditLog (
     LogID INTEGER PRIMARY KEY AUTOINCREMENT,
     Username TEXT NOT NULL,
@@ -49,6 +53,8 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS AuditLog (
     Timestamp TEXT NOT NULL
 )
                 """)
+
+## Recall Table ##
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS Recall_Table(
