@@ -151,7 +151,7 @@ def validateAppointmentDate(date):
         return True
     except ValueError:
         return False
-
+#
 def validateAppointmentTime(time, duration):
     try:
         time = datetime.strptime(time, "%H:%M")
