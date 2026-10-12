@@ -3,7 +3,6 @@
 
 
 import sqlite3
-import appointments
 from datetime import datetime, timedelta
 connect = sqlite3.connect("database.db")
 cursor = connect.cursor()
@@ -70,6 +69,7 @@ def generateRecalls():
 
 
 def getActiveRecalls():
+    today = datetime.today().strftime("%Y-%m-%d")
     generateRecalls()
     cursor.execute("""
     SELECT RecallID,
@@ -87,7 +87,7 @@ def getActiveRecalls():
         FROM Appointments_Table
         WHERE Appointment_date >= ?)
     ORDER BY Priority ASC, SuggestedDate ASC
-    """)
+    """,(today,))
     return cursor.fetchall()
 
 

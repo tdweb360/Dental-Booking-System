@@ -8,6 +8,7 @@ import authentication
 import Logging
 import patients
 import Recalls
+import database
 from datetime import datetime
 class App(ctk.CTk):
 
@@ -747,6 +748,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.staff_menu.configure(values=names)
 
     def loadAppointment(self, appointmentID):
+        self.appointmentID = appointmentID
         self.loadStaffMembers()
 
         appointment = appointments.getAppointmentByID(appointmentID)
@@ -1074,16 +1076,16 @@ class RecallFrame(ctk.CTkFrame):
         super().__init__(app)
         self.app = app
         ctk.CTkLabel(self,text="Recall Management",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
-        self.results_frame = ctk.CTkScrollableFrame(self, width=900, height=500)
-        self.results_frame.pack(fill="both", expand=True, padx=20)
+        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
+        self.back_button.pack(side="bottom",pady=20)
+        self.results_frame = ctk.CTkScrollableFrame(self,width=900,height=500)
+        self.results_frame.pack(fill="both",expand=True,padx=20)
         self.header = ctk.CTkFrame(self.results_frame)
         self.header.pack(fill="x")
         ctk.CTkLabel(self.header,text="Recall ID",width=80).pack(side="left")
         ctk.CTkLabel(self.header,text="Patient",width=200).pack(side="left")
         ctk.CTkLabel(self.header,text="Suggested Date",width=140).pack(side="left")
         ctk.CTkLabel(self.header,text="Priority",width=120).pack(side="left")
-        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
-        self.back_button.pack(pady=20)
 
     def loadRecalls(self):
         for widget in self.results_frame.winfo_children():
@@ -1162,15 +1164,23 @@ class AuditLogFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.header,text="Action",width=150).pack(side="left")
         ctk.CTkLabel(self.header,text="Details",width=300).pack(side="left")
         ctk.CTkLabel(self.header,text="Timestamp",width=180).pack(side="left")
-        self.results_frame = ctk.CTkScrollableFrame( self,width=1000,height=500)
-        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+
+        self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
+        self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
+
+        self.back_button = ctk.CTkButton(self.bottom_frame, text="Back",command=self.back)
+        self.back_button.pack()
         self.navigation_frame = ctk.CTkFrame(self)
-        self.navigation_frame.pack(pady=10)
+        self.navigation_frame.pack(side="bottom",pady=10)
         ctk.CTkButton(self.navigation_frame,text="Previous",command=self.previousPage).pack(side="left", padx=10)
         self.page_label = ctk.CTkLabel(self.navigation_frame,text="Page 1")
         self.page_label.pack(side="left", padx=10)
         ctk.CTkButton(self.navigation_frame,text="Next",command=self.nextPage).pack(side="left", padx=10)
-        ctk.CTkButton(self,text="Back",command=self.back).pack(pady=20)
+        self.results_frame = ctk.CTkScrollableFrame(self,width=1000,height=500)
+        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+
+
+
 
 
     def loadLogs(self):

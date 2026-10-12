@@ -102,7 +102,7 @@ def checkManager(username):
         """,
         (username,))
     result = cursor.fetchone()
-    return (result is not None and result[0] == "Manager")
+    return result is not None and result[0] == "Manager"
 
 def createInitialManager():
     cursor.execute("""
@@ -199,7 +199,7 @@ def updateStaff(staffID,firstname,surname,username,role,current_user):
             f"StaffID {staffID}"
         )
         return "SUCCESS"
-    except sqlite3.Error::
+    except sqlite3.Error:
         return "DATABASE_ERROR"
 
 def resetPasswordGUI(staffID,password,confirmPassword,current_user):
