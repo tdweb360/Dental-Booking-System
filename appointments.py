@@ -110,10 +110,10 @@ def editAppointment(appointmentID,date,time,duration,patientID, staffID,current_
         return "INVALID TIME"
     if resultTIME == "ENDofDAY":
         return "END OF DAY"
+    if datetime.strptime(date + " " + time, "%d/%m/%Y %H:%M") < datetime.now():
+        return "PAST DATE"
     dbDate = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
-
     conflict = checkConflict(dbDate,time,duration,staffID,patientID,appointmentID)
-
     if conflict:
         return conflict
     else:
