@@ -1075,35 +1075,66 @@ class RecallFrame(ctk.CTkFrame):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
+        self.current_page = 1
+        self.records_per_page = 10
+        self.results = []
+
         ctk.CTkLabel(self,text="Recall Management",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
+
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
         self.back_button.pack(side="bottom",pady=20)
-        self.results_frame = ctk.CTkScrollableFrame(self,width=900,height=500)
-        self.results_frame.pack(fill="both",expand=True,padx=20)
-        self.header = ctk.CTkFrame(self.results_frame)
-        self.header.pack(fill="x")
+
+        self.navigation_frame = ctk.CTkFrame(self)
+        self.navigation_frame.pack(side="bottom",pady=10)
+        ctk.CTkButton(self.navigation_frame,text="Previous",command=self.previousPage).pack(side="left",padx=10)
+        self.page_label = ctk.CTkLabel(self.navigation_frame,text="Page 1")
+        self.page_label.pack(side="left",padx=10)
+        ctk.CTkButton(self.navigation_frame,text="Next",command=self.nextPage).pack(side="left",padx=10)
+
+        self.header = ctk.CTkFrame(self)
+        self.header.pack(fill="x",padx=20)
         ctk.CTkLabel(self.header,text="Recall ID",width=80).pack(side="left")
         ctk.CTkLabel(self.header,text="Patient",width=200).pack(side="left")
         ctk.CTkLabel(self.header,text="Suggested Date",width=140).pack(side="left")
         ctk.CTkLabel(self.header,text="Priority",width=120).pack(side="left")
 
-    def loadRecalls(self):
+        self.results_frame = ctk.CTkScrollableFrame(self, width=900, height=500)
+        self.results_frame.pack(fill="both", expand=True, padx=20, pady=10)
+
+    def loadRecalls(self, keepPage=False):
+        self.results = Recalls.getActiveRecalls()
+        if not keepPage:
+            self.current_page = 1
+        totalPages = max(1, (len(self.results) + self.records_per_page - 1) // self.records_per_page)
+        if self.current_page > totalPages:
+            self.current_page = totalPages
+        self.displayResults()
+
+    def displayResults(self):
         for widget in self.results_frame.winfo_children():
             widget.destroy()
-        self.header = ctk.CTkFrame(self.results_frame)
-        self.header.pack(fill="x")
-        ctk.CTkLabel(self.header, text="Recall ID", width=80).pack(side="left")
-        ctk.CTkLabel(self.header, text="Patient", width=200).pack(side="left")
-        ctk.CTkLabel(self.header, text="Suggested Date", width=140).pack(side="left")
-        ctk.CTkLabel(self.header, text="Priority", width=120).pack(side="left")
-        recalls = Recalls.getActiveRecalls()
 
-        if len(recalls) == 0:
+        totalPages = max(1, (len(self.results) + self.records_per_page - 1) // self.records_per_page)
+        self.page_label.configure(text=f"Page {self.current_page} of {totalPages}")
+
+        if len(self.results) == 0:
             ctk.CTkLabel(self.results_frame,text="No active recalls").pack(pady=20)
             return
 
-        for record in recalls:
+        start = (self.current_page - 1) * self.records_per_page
+        end = start + self.records_per_page
+        for record in self.results[start:end]:
             self.createRecallRow(record)
+
+    def nextPage(self):
+        if self.current_page * self.records_per_page < len(self.results):
+            self.current_page += 1
+            self.displayResults()
+
+    def previousPage(self):
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.displayResults()
 
     def createRecallRow(self, recallData):
 
@@ -1124,12 +1155,12 @@ class RecallFrame(ctk.CTkFrame):
         ctk.CTkLabel(row,text=suggestedDate,width=140).pack(side="left", padx=5)
         priority_menu = ctk.CTkOptionMenu(row,values=["1", "2", "3", "4", "5"])
         priority_menu.set(str(priority))
-        ctk.CTkButton(row,text="Book",command=partial(self.bookRecall,patientID,suggestedDate,recallID)).pack(side="right", padx=5)
+        ctk.CTkButton(row,text="Book",command=partial(self.bookRecall,patientID,suggestedDate)).pack(side="right", padx=5)
         ctk.CTkButton(row,text="Complete",command=partial(self.completeRecall,recallID)).pack(side="right", padx=5)
         priority_menu.pack(side="left", padx=5)
         ctk.CTkButton(row,text="Save",width=60,command=partial(self.savePriority,recallID,priority_menu )).pack(side="right", padx=5)
 
-    def bookRecall(self, patientID, suggestedDate, recallID):
+    def bookRecall(self, patientID, suggestedDate):
         self.app.new_appointment_frame.loadPatient(patientID)
         self.app.new_appointment_frame.date_entry.delete( 0, "end")
         self.app.new_appointment_frame.date_entry.insert(0,suggestedDate)
@@ -1137,12 +1168,12 @@ class RecallFrame(ctk.CTkFrame):
 
     def completeRecall(self, recallID):
         Recalls.completeRecall(recallID)
-        self.loadRecalls()
+        self.loadRecalls(keepPage=True)
 
     def savePriority(self, recallID, priority_menu):
         priority = int(priority_menu.get())
         Recalls.updatePriority(recallID,priority)
-        self.loadRecalls()
+        self.loadRecalls(keepPage=True)
 
 
     def back(self):
