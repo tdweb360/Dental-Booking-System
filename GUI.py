@@ -92,11 +92,6 @@ class LoginFrame(ctk.CTkFrame):
 
         if self.app.attempts >= 3:
             self.locked_label.pack(pady=20)
-            Logging.log_action(
-                username,
-                "ACCOUNT_LOCKED",
-                "Three failed login attempts"
-            )
 
             return
 
@@ -158,6 +153,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.add_patient_frame)
 
     def open_appointment_frame(self):
+        self.app.manageAppointment_Frame.loadAllAppointments()
         self.app.show_frame(self.app.manageAppointment_Frame)
 
     def open_staff_frame(self):
@@ -277,7 +273,10 @@ class PatientFrame(ctk.CTkFrame):
         row.pack(fill="x", pady=2)
         widths = [60, 120, 120, 120, 120]
         for Count in range(5):
-            ctk.CTkLabel(row,text=patient[Count],width=widths[Count]).grid(row=0,column=Count,padx=5)
+            text = patient[Count]
+            if Count == 3:
+                text = datetime.strptime(patient[3],"%Y-%m-%d").strftime("%d/%m/%Y")
+            ctk.CTkLabel(row,text=text,width=widths[Count]).grid(row=0, column=Count, padx=5)
         patientID = patient[0]
         ctk.CTkButton(row,text="Open",width=80,command=partial(self.open_patient,patientID)).grid(row=0, column=5, padx=5)
 
@@ -535,8 +534,12 @@ class BookAppointmentFrame(ctk.CTkFrame):
         for w in self.results_frame.winfo_children():
             w.destroy()
         date = self.date_entry.get().strip()
-        if not appointments.validateAppointmentDate(date):
-            self.feedback_label.configure(text="Invalid date",text_color="red")
+        result = appointments.validateAppointmentDate(date)
+        if result == "WRONG FORMAT":
+            self.feedback_label.configure(text="Date must be DD/MM/YYYY",text_color="red")
+            return
+        elif result == "PAST DATE":
+            self.feedback_label.configure(text="Date cannot be in the past",text_color="red")
             return
 
         self.feedback_label.configure(text="")
@@ -590,6 +593,16 @@ class BookAppointmentFrame(ctk.CTkFrame):
         result = appointments.createAppointment(self.patientID,staffID,date,self.selected_slot,duration,self.app.current_user)
         if result == "SUCCESS":
             self.feedback_label.configure(text="Appointment Booked Successfully",text_color="green",font=ctk.CTkFont(size=18, weight="bold"))
+        elif result == "END OF DAY":
+            self.feedback_label.configure(text="Appointment could not be booked, must be during opening hours (09:00-17:00)", text_color="red",font=ctk.CTkFont(size=18, weight="bold"))
+        elif result == "WRONG FORMAT":
+            self.feedback_label.configure(text="Appointment must be in DD/MM/YYYY", text_color="red",font=ctk.CTkFont(size=18, weight="bold"))
+        elif result == "PAST DATE":
+            self.feedback_label.configure(text="Appointment must not be a date in the past", text_color="red",font=ctk.CTkFont(size=18, weight="bold"))
+        elif result == "STAFF CONFLICT":
+            self.feedback_label.configure(text="Staff member already booked at this time",text_color="red")
+        elif result == "PATIENT CONFLICT":
+            self.feedback_label.configure(text="Patient already has an appointment at this time",text_color="red")
         else:
             self.feedback_label.configure(text="Appointment could not be booked", text_color="red",font=ctk.CTkFont(size=18, weight="bold"))
 
@@ -782,9 +795,14 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
 
         elif result == "INVALID TIME":
             self.feedback_label.configure(text="Time must be HH:MM",text_color="red" )
+        elif result == "END OF DAY":
+            self.feedback_label.configure(text="Appointment could not be booked, must be during opening hours (09:00-17:00)", text_color="red")
 
-        elif result in ("STAFF CONFLICT", "PATIENT CONFLICT"):
-            self.feedback_label.configure(text="Appointment conflicts with another booking",text_color="red")
+        elif result == "STAFF CONFLICT":
+            self.feedback_label.configure(text="Staff member already booked at this time",text_color="red")
+
+        elif result == "PATIENT CONFLICT":
+            self.feedback_label.configure(text="Patient already has an appointment at this time",text_color="red")
         else:
             self.feedback_label.configure(text="Database error",text_color="red")
 

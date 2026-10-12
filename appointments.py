@@ -11,17 +11,21 @@ cursor.execute("PRAGMA foreign_keys = ON")
 
 
 def createAppointment(patientID,staffID,date,time,duration,current_user):
-    if not validateAppointmentDate(date):
-        return "INVALID DATE"
-    if not validateAppointmentTime(
-            time,
-            duration):
+    resultDATE = validateAppointmentDate(date)
+    if resultDATE == "WRONG FORMAT":
+        return "WRONG FORMAT"
+    elif resultDATE == "PAST DATE":
+        return "PAST DATE"
+    resultTIME = validateAppointmentTime(time,duration)
+    if resultTIME in ["HOUR","MIN"] :
         return "INVALID TIME"
+    if resultTIME == "ENDofDAY":
+        return "END OF DAY"
     date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
 
     conflict = checkConflict(date,time,duration,staffID,patientID)
     if conflict:
-        return "CONFLICT"
+        return conflict
     cursor.execute("""
     INSERT INTO Appointments_Table
     (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
@@ -61,8 +65,7 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
         existingEnd = existingStart + timedelta(minutes=each[1])
 
         if bookingStart < existingEnd and bookingEnd > existingStart:
-            return True
-
+            return "STAFF CONFLICT"
 
     if excludeAppointmentID is None:
         cursor.execute("""
@@ -86,7 +89,8 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
         existingEnd = existingStart + timedelta(minutes=each[1])
 
         if bookingStart < existingEnd and bookingEnd > existingStart:
-            return True
+            return "PATIENT CONFLICT"
+
     return False
 
 
@@ -95,15 +99,23 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
 
 
 def editAppointment(appointmentID,date,time,duration,patientID, staffID,current_user):
-    if not validateAppointmentDate(date):
-        return "INVALID DATE"
-    dbDate = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
-    if not validateAppointmentTime(time, duration):
+
+    resultDATE = validateAppointmentDate(date)
+    if resultDATE == "WRONG FORMAT":
+        return "WRONG FORMAT"
+    elif resultDATE == "PAST DATE":
+        return "PAST DATE"
+    resultTIME = validateAppointmentTime(time,duration)
+    if resultTIME in ["HOUR","MIN"] :
         return "INVALID TIME"
+    if resultTIME == "ENDofDAY":
+        return "END OF DAY"
+    dbDate = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
+
     conflict = checkConflict(dbDate,time,duration,staffID,patientID,appointmentID)
 
     if conflict:
-        return "CONFLICT"
+        return conflict
     else:
         return editAppointmentSQL(appointmentID,dbDate,time,duration,patientID,staffID,current_user)
 
@@ -123,7 +135,7 @@ def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID, curr
             "EDIT_APPOINTMENT",
             f"AppointmentID {appointmentID}, StaffID {staffID}")
         return "SUCCESSFUL"
-    except:
+    except sqlite3.Error:
         return "UNSUCCESSFUL"
 
 
@@ -147,23 +159,27 @@ def deleteAppointment(appointmentID,current_user):
 
 def validateAppointmentDate(date):
     try:
-        date = datetime.strptime(date, "%d/%m/%Y")
-        if date.date() < datetime.today().date():
-            return False
+        parsedDate = datetime.strptime(date, "%d/%m/%Y")
+        if parsedDate.strftime("%d/%m/%Y") != date:
+            return "WRONG FORMAT"
+        if parsedDate.date() < datetime.today().date():
+            return "PAST DATE"
         return True
     except ValueError:
-        return False
+        return "WRONG FORMAT"
 #
 def validateAppointmentTime(time, duration):
     try:
+        if duration not in [15, 30, 45, 60]:
+            return False
         time = datetime.strptime(time, "%H:%M")
         endTime = time + timedelta(minutes=duration)
         if not (9 <= time.hour < 17):
-            return False
+            return "HOUR"
         if time.minute not in [0, 15, 30, 45]:
-            return False
+            return "MIN"
         if endTime > datetime.strptime("17:00", "%H:%M"):
-            return False
+            return "ENDofDAY"
         return True
     except ValueError:
         return False
