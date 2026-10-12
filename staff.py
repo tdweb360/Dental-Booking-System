@@ -49,7 +49,7 @@ def validUsernameFormat(username):
         return False
     if re.match(r"^[A-Za-z0-9._]+$",
         username
-    ) is not None
+    ) is not None:
 
 def createUsername(username):
     pattern = r"^[A-Za-z0-9._]+$"
