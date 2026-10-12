@@ -17,7 +17,7 @@ def createAppointment(patientID,staffID,date,time,duration,current_user):
     elif resultDATE == "PAST DATE":
         return "PAST DATE"
     resultTIME = validateAppointmentTime(time,duration)
-    if resultTIME in ["HOUR","MIN"] :
+    if resultTIME in ["HOUR", "MIN"] or resultTIME is False:
         return "INVALID TIME"
     if resultTIME == "ENDofDAY":
         return "END OF DAY"
@@ -106,7 +106,7 @@ def editAppointment(appointmentID,date,time,duration,patientID, staffID,current_
     elif resultDATE == "PAST DATE":
         return "PAST DATE"
     resultTIME = validateAppointmentTime(time,duration)
-    if resultTIME in ["HOUR","MIN"] :
+    if resultTIME in ["HOUR", "MIN"] or resultTIME is False:
         return "INVALID TIME"
     if resultTIME == "ENDofDAY":
         return "END OF DAY"
@@ -139,22 +139,28 @@ def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID, curr
         return "UNSUCCESSFUL"
 
 
-def deleteAppointment(appointmentID,current_user):
-    cursor.execute("""
-    DELETE FROM Recall_Table
-    WHERE AppointmentID = ?
-    """, (appointmentID,))
-    cursor.execute("""
-    DELETE FROM Appointments_Table
-    WHERE AppointmentID = ?
-    """, (appointmentID,))
-    connect.commit()
-    Logging.log_action(
-        current_user,
-        "DELETE_APPOINTMENT",
-        f"AppointmentID {appointmentID}")
-    return True
-
+def deleteAppointment(appointmentID, current_user):
+    try:
+        cursor.execute("""
+        DELETE FROM Recall_Table
+        WHERE AppointmentID = ?
+        """, (appointmentID,))
+        cursor.execute("""
+        DELETE FROM Appointments_Table
+        WHERE AppointmentID = ?
+        """, (appointmentID,))
+        if cursor.rowcount == 0:
+            connect.rollback()
+            return False
+        connect.commit()
+        Logging.log_action(
+            current_user,
+            "DELETE_APPOINTMENT",
+            f"AppointmentID {appointmentID}")
+        return True
+    except sqlite3.Error:
+        connect.rollback()
+        return False
 
 
 def validateAppointmentDate(date):
@@ -183,17 +189,6 @@ def validateAppointmentTime(time, duration):
         return True
     except ValueError:
         return False
-#
-def getAppointmentsByDate(date, staffID):
-    date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
-    cursor.execute("""
-    SELECT Appointment_time, Duration
-    FROM Appointments_Table
-    WHERE Appointment_date = ?
-    AND StaffID = ?
-    ORDER BY Appointment_time
-    """, (date, staffID))
-    return cursor.fetchall()
 
 def getAppointmentsByDateAndStaff(date,staffID):
 

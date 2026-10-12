@@ -643,6 +643,8 @@ class ManageAppointmentFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.header, text="Patient", width=180).pack(side="left", padx=5)
         ctk.CTkLabel(self.header, text="Staff", width=180).pack(side="left", padx=5)
         ctk.CTkLabel(self.header, text="Duration", width=100).pack(side="left",padx= 5)
+        self.feedback_label = ctk.CTkLabel(self,text="")
+        self.feedback_label.pack()
 
         self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.bottom_frame.pack(side="bottom", fill="x", pady=(0, 20))
@@ -790,8 +792,11 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Appointment updated successfully",text_color="green")
             self.app.manageAppointment_Frame.loadAllAppointments()
 
-        elif result == "INVALID DATE":
-            self.feedback_label.configure(text="Date must be DD/MM/YYYY", text_color="red")
+        elif result == "WRONG FORMAT":
+            self.feedback_label.configure(text="Date must be DD/MM/YYYY",text_color="red")
+
+        elif result == "PAST DATE":
+            self.feedback_label.configure(text="Date cannot be in the past",text_color="red")
 
         elif result == "INVALID TIME":
             self.feedback_label.configure(text="Time must be HH:MM",text_color="red" )
@@ -836,6 +841,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         if success:
             self.confirm_window.destroy()
             self.app.manageAppointment_Frame.loadAllAppointments()
+            self.app.manageAppointment_Frame.feedback_label.configure(text="Appointment cancelled successfully",text_color="green")
             self.app.show_frame(self.app.manageAppointment_Frame)
         else:
             self.feedback_label.configure(text="Error deleting appointment", text_color="red")
@@ -1048,10 +1054,9 @@ class StaffDetailsFrame(ctk.CTkFrame):
 
     def confirmDelete(self):
         result = staff.deleteStaff(self.staffID, self.app.current_user)
-        self.confirm_window.destroy()
         if result == "SUCCESS":
-            self.app.staff_frame.feedback_label.configure(text="Staff member deleted successfully",text_color="green")
             self.app.staff_frame.searchStaff()
+            self.app.staff_frame.feedback_label.configure(text="Staff member deleted successfully",text_color="green")
             self.app.show_frame(self.app.staff_frame)
         elif result == "HAS_APPOINTMENTS":
             self.feedback_label.configure(text="Staff member has appointments and cannot be deleted",text_color="red")
@@ -1059,6 +1064,7 @@ class StaffDetailsFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="You cannot delete your own account",text_color="red")
         else:
             self.feedback_label.configure(text="Error deleting staff member",text_color="red")
+        self.confirm_window.destroy()
 
 
     def resetPassword(self):

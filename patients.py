@@ -23,6 +23,8 @@ def validateFNandSN(firstname, surname):
 def validateDOB(dob):
     try:
         date = datetime.strptime(dob,"%d/%m/%Y")
+        if date.strftime("%d/%m/%Y") != dob:
+            return False
         if date > datetime.today():
             return False
         return True
@@ -91,6 +93,7 @@ def get_patient_by_id(patient_id):
 
 
 def deletePatient(patientID, current_user):
+
     try:
         cursor.execute("""
             DELETE FROM Recall_Table
@@ -104,13 +107,17 @@ def deletePatient(patientID, current_user):
             DELETE FROM Patients_Table
             WHERE PatientID = ?
         """, (patientID,))
+        if cursor.rowcount == 0:
+            connect.rollback()
+            return False
         connect.commit()
         Logging.log_action(
             current_user,
             "DELETE_PATIENT",
             f"PatientID {patientID}")
         return True
-    except:
+    except sqlite3.Error:
+        connect.rollback()
         return False
 
 

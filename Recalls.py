@@ -10,48 +10,35 @@ cursor.execute("PRAGMA foreign_keys = ON")
 
 
 def generateRecalls():
-
     today = datetime.today().strftime("%Y-%m-%d")
-
     cursor.execute("""
     SELECT AppointmentID,PatientID,MAX(Appointment_date)
     FROM Appointments_Table
     WHERE Appointment_date < ?
     GROUP BY PatientID
     """, (today,))
-
     pastAppointments = cursor.fetchall()
-
     for appointment in pastAppointments:
-
         appointmentID = appointment[0]
         patientID = appointment[1]
         appointmentDate = appointment[2]
-
         cursor.execute("""
         SELECT COUNT(*)
         FROM Recall_Table
         WHERE AppointmentID = ?
         """, (appointmentID,))
-
         result = cursor.fetchone()
-
         if result[0] > 0:
             continue
-
         cursor.execute("""
         SELECT COUNT(*)
         FROM Appointments_Table
         WHERE PatientID = ?
         AND Appointment_date > ?
         """, (patientID, today))
-
         result = cursor.fetchone()
-
         if result[0] == 0:
-
             suggestedDate = (datetime.strptime(appointmentDate,"%Y-%m-%d") + timedelta(days=183)).strftime("%Y-%m-%d")
-
             cursor.execute("""
             INSERT INTO Recall_Table
             (PatientID,
