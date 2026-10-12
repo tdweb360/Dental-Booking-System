@@ -183,7 +183,7 @@ def validateAppointmentTime(time, duration):
         return True
     except ValueError:
         return False
-
+#
 def getAppointmentsByDate(date, staffID):
     date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
     cursor.execute("""
