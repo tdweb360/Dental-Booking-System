@@ -41,7 +41,7 @@ def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
         )
 
         return "SUCCESS"
-    except:
+    except sqlite3.Error:
         return "DATABASE ERROR"
 
 def validUsernameFormat(username):
@@ -146,6 +146,9 @@ def hashpass(password):
 def deleteStaff(staffID, current_user):
     if not checkManager(current_user):
         return "NOT_AUTHORISED"
+    member = getStaffByID(staffID)
+    if member[3] == current_user:
+        return "OWN_ACCOUNT"
     try:
         cursor.execute("""
         DELETE FROM Staff_Table
@@ -157,7 +160,7 @@ def deleteStaff(staffID, current_user):
             "DELETE_STAFF",
             f"StaffID {staffID}")
         return "SUCCESS"
-    except:
+    except sqlite3.Error:
         return "DATABASE_ERROR"
 
 def updateStaff(staffID,firstname,surname,username,role,current_user):
@@ -196,7 +199,7 @@ def updateStaff(staffID,firstname,surname,username,role,current_user):
             f"StaffID {staffID}"
         )
         return "SUCCESS"
-    except:
+    except sqlite3.Error::
         return "DATABASE_ERROR"
 
 def resetPasswordGUI(staffID,password,confirmPassword,current_user):
@@ -220,7 +223,7 @@ def resetPasswordGUI(staffID,password,confirmPassword,current_user):
             f"StaffID {staffID}"
         )
         return "SUCCESS"
-    except:
+    except sqlite3.Error:
         return "DATABASE_ERROR"
 
 

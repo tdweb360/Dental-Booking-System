@@ -4,8 +4,6 @@
 import sqlite3
 from datetime import datetime, timedelta
 
-import patients
-import staff
 import Logging
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -130,6 +128,10 @@ def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID, curr
 
 
 def deleteAppointment(appointmentID,current_user):
+    cursor.execute("""
+    DELETE FROM Recall_Table
+    WHERE AppointmentID = ?
+    """, (appointmentID,))
     cursor.execute("""
     DELETE FROM Appointments_Table
     WHERE AppointmentID = ?

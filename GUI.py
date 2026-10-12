@@ -232,12 +232,13 @@ class PatientFrame(ctk.CTkFrame):
         self.title_label.pack(pady=20)
         self.feedback_label.pack()
 
-        self.search_frame.pack(fill="x",padx=20,pady=10)
-        self.results_title.pack(pady=(5, 0))
-        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
         self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
         self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
         self.back_button = ctk.CTkButton(self.bottom_frame,text="Back",command=self.back)
+        self.search_frame.pack(fill="x",padx=20,pady=10)
+        self.results_title.pack(pady=(5, 0))
+        self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+
         self.back_button.pack()
 
 
@@ -366,7 +367,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
     def deletePatient(self):
         self.confirm_window = ctk.CTkToplevel(self)
         self.confirm_window.title("Confirm Delete")
-        self.confirm_window.geometry("350x200")
+        self.confirm_window.geometry("350x230")
 
         self.confirm_window.lift()
         self.confirm_window.focus_force()
@@ -380,6 +381,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
                 f"Are you sure you want to delete:\n\n"
                 f"{firstname} {surname}\n"
                 f"Patient ID: {self.patientID}\n\n"
+                f"All appointments will also be deleted.\n"
                 f"This action cannot be undone.")).pack(pady=20)
         ctk.CTkButton(self.confirm_window, text="Yes", command=self.confirmDelete).pack(pady=5)
         ctk.CTkButton(self.confirm_window, text="No", command=self.confirm_window.destroy).pack(pady=5)
@@ -478,15 +480,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.book_button = ctk.CTkButton(self, text="Book Appointment", command=self.bookAppointment)
         self.staff_menu = ctk.CTkOptionMenu(self, values=["Select Staff"])
 
-        self.staff_lookup = {}
-        names = []
-        for member in staff.getAllStaff():
-            fullName = member[1] + " " + member[2]
-            names.append(fullName)
-            self.staff_lookup[fullName] = member[0]
-
-        self.staff_menu.configure(values=names)
-        self.staff_menu.configure(values=names)
+        self.loadStaffMembers()
 
         self.patient_label.pack()
         self.date_entry.pack(pady=5)
@@ -500,10 +494,18 @@ class BookAppointmentFrame(ctk.CTkFrame):
         ctk.CTkButton(self,text="Back",command=self.back).pack(padx=20)
 
     def loadStaffMembers(self):
-        self.loadStaffMembers()
+        self.staff_lookup = {}
+        names = []
+        for member in staff.getAllStaff():
+            fullName = member[1] + " " + member[2]
+            names.append(fullName)
+            self.staff_lookup[fullName] = member[0]
+        self.staff_menu.configure(values=names)
 #
 
     def loadPatient(self, patientID):
+        self.selected_slot = None
+        self.selected_slot_label.configure(text="Selected Slot: None")
         self.loadStaffMembers()
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
@@ -627,19 +629,21 @@ class ManageAppointmentFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.header, text="Staff", width=180).pack(side="left", padx=5)
         ctk.CTkLabel(self.header, text="Duration", width=100).pack(side="left",padx= 5)
 
-        self.results_frame = ctk.CTkScrollableFrame(self, width=1000, height=500)
-        self.results_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.bottom_frame.pack(side="bottom", fill="x", pady=(0, 20))
+        self.back_button = ctk.CTkButton(self.bottom_frame, text="Back", command=self.back)
+        self.back_button.pack()
+
         self.navigation_frame = ctk.CTkFrame(self)
-        self.navigation_frame.pack(pady=10)
+        self.navigation_frame.pack(side="bottom", pady=10)
         ctk.CTkButton(self.navigation_frame, text="Previous", command=self.previousPage).pack(side="left", padx=10)
         self.page_label = ctk.CTkLabel(self.navigation_frame, text="Page 1")
         self.page_label.pack(side="left", padx=10)
         ctk.CTkButton(self.navigation_frame, text="Next", command=self.nextPage).pack(side="left", padx=10)
-        self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
-        self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
-        self.back_button = ctk.CTkButton(self.bottom_frame,text="Back",command=self.back)
 
-        self.back_button.pack()
+        self.results_frame = ctk.CTkScrollableFrame(self, width=1000, height=500)
+        self.results_frame.pack(fill="both", expand=True, padx=20, pady=10)
+
         self.loadAllAppointments()
 
     def loadAllAppointments(self):
@@ -776,7 +780,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         elif result == "INVALID TIME":
             self.feedback_label.configure(text="Time must be HH:MM",text_color="red" )
 
-        elif result == "CONFLICT":
+        elif result in ("STAFF CONFLICT", "PATIENT CONFLICT"):
             self.feedback_label.configure(text="Appointment conflicts with another booking",text_color="red")
         else:
             self.feedback_label.configure(text="Database error",text_color="red")

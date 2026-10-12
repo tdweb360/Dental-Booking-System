@@ -81,7 +81,11 @@ def getActiveRecalls():
     FROM Recall_Table
     INNER JOIN Patients_Table
     ON Recall_Table.PatientID = Patients_Table.PatientID
-    WHERE Completed = 0
+        WHERE Completed = 0
+        AND Recall_Table.PatientID NOT IN (
+        SELECT PatientID
+        FROM Appointments_Table
+        WHERE Appointment_date >= ?)
     ORDER BY Priority ASC, SuggestedDate ASC
     """)
     return cursor.fetchall()

@@ -93,6 +93,14 @@ def get_patient_by_id(patient_id):
 def deletePatient(patientID, current_user):
     try:
         cursor.execute("""
+            DELETE FROM Recall_Table
+            WHERE PatientID = ?
+        """, (patientID,))
+        cursor.execute("""
+            DELETE FROM Appointments_Table
+            WHERE PatientID = ?
+        """, (patientID,))
+        cursor.execute("""
             DELETE FROM Patients_Table
             WHERE PatientID = ?
         """, (patientID,))
@@ -132,7 +140,7 @@ def updatePatient(patientID, firstname, surname, dob, phone, current_user):
             "EDIT_PATIENT",
             f"PatientID {patientID}")
         return "SUCCESS"
-    except:
+    except sqlite3.Error:
         return "DATABASE_ERROR"
 
 def addPatient(firstname, surname, dob, phone, current_user):
@@ -158,8 +166,7 @@ def addPatient(firstname, surname, dob, phone, current_user):
             f"PatientID {patientID}"
         )
         return "SUCCESS"
-    except Exception as e:
-        print(e)
+    except sqlite3.Error:
         return "DATABASE_ERROR"
 
 
