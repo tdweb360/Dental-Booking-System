@@ -39,7 +39,7 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
     bookingStart = datetime.strptime(time, "%H:%M")
     bookingEnd = bookingStart + timedelta(minutes=duration)
 
-    #s
+
     if excludeAppointmentID is None:
         cursor.execute("""
         SELECT Appointment_time, Duration
@@ -63,7 +63,7 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
         if bookingStart < existingEnd and bookingEnd > existingStart:
             return True
 
-    #p
+
     if excludeAppointmentID is None:
         cursor.execute("""
         SELECT Appointment_time, Duration

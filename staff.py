@@ -45,19 +45,14 @@ def addStaffGUI(firstname,surname,username,password,pass2,role,current_user):
         return "DATABASE ERROR"
 
 def validUsernameFormat(username):
-
     if not (4 <= len(username) <= 20):
         return False
-
-    return re.match(
-        r"^[A-Za-z0-9._]+$",
+    if re.match(r"^[A-Za-z0-9._]+$",
         username
     ) is not None
 
 def createUsername(username):
-
     pattern = r"^[A-Za-z0-9._]+$"
-
     if not(4 <= len(username) <= 20):
         return False
     elif not(re.match(pattern,username)):
@@ -149,6 +144,13 @@ def deleteStaff(staffID, current_user):
     member = getStaffByID(staffID)
     if member[3] == current_user:
         return "OWN_ACCOUNT"
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM Appointments_Table
+    WHERE StaffID = ?
+    """, (staffID,))
+    if cursor.fetchone()[0] > 0:
+        return "HAS_APPOINTMENTS"
     try:
         cursor.execute("""
         DELETE FROM Staff_Table

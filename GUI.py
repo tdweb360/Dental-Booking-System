@@ -106,6 +106,7 @@ class LoginFrame(ctk.CTkFrame):
             self.app.attempts += 1
             if self.app.attempts >= 3:
                 self.locked_label.pack(pady=20)
+                Logging.log_action(username, "ACCOUNT_LOCKED", "Three failed login attempts")
             else:
                 self.error_label.pack(pady=5)
 
@@ -1029,12 +1030,17 @@ class StaffDetailsFrame(ctk.CTkFrame):
 
     def confirmDelete(self):
         result = staff.deleteStaff(self.staffID, self.app.current_user)
+        self.confirm_window.destroy()
         if result == "SUCCESS":
-            self.confirm_window.destroy()
+            self.app.staff_frame.feedback_label.configure(text="Staff member deleted successfully",text_color="green")
             self.app.staff_frame.searchStaff()
             self.app.show_frame(self.app.staff_frame)
+        elif result == "HAS_APPOINTMENTS":
+            self.feedback_label.configure(text="Staff member has appointments and cannot be deleted",text_color="red")
+        elif result == "OWN_ACCOUNT":
+            self.feedback_label.configure(text="You cannot delete your own account",text_color="red")
         else:
-            self.feedback_label.configure(text="Error deleting staff member", text_color="red")
+            self.feedback_label.configure(text="Error deleting staff member",text_color="red")
 
 
     def resetPassword(self):
