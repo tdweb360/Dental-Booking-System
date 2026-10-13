@@ -21,6 +21,8 @@ def createAppointment(patientID,staffID,date,time,duration,current_user):
         return "INVALID TIME"
     if resultTIME == "ENDofDAY":
         return "END OF DAY"
+    if datetime.strptime(date + " " + time, "%d/%m/%Y %H:%M") < datetime.now():
+        return "PAST DATE"
     date = datetime.strptime(date,"%d/%m/%Y").strftime("%Y-%m-%d")
 
     conflict = checkConflict(date,time,duration,staffID,patientID)
@@ -178,7 +180,10 @@ def validateAppointmentTime(time, duration):
     try:
         if duration not in [15, 30, 45, 60]:
             return False
-        time = datetime.strptime(time, "%H:%M")
+        parsed = datetime.strptime(time, "%H:%M")
+        if parsed.strftime("%H:%M") != time:
+            return False
+        time = parsed
         endTime = time + timedelta(minutes=duration)
         if not (9 <= time.hour < 17):
             return "HOUR"

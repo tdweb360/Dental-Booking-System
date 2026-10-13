@@ -107,6 +107,7 @@ class LoginFrame(ctk.CTkFrame):
 
         else:
             staff_id, role, username = result
+            self.app.current_staff_id = staff_id
             self.app.current_role = role
             if role == "Manager":
                 self.app.dashboardFrame.staff_button.pack(pady=10)
@@ -1021,6 +1022,9 @@ class StaffDetailsFrame(ctk.CTkFrame):
 
         if result == "SUCCESS":
             self.feedback_label.configure(text="Staff updated successfully",text_color="green")
+            if self.staffID == self.app.current_staff_id:
+                self.app.current_user = username
+                self.app.current_role = role
         elif result == "INVALID_NAME":
             self.feedback_label.configure(text="Invalid name",text_color="red")
         elif result == "INVALID_USERNAME":
