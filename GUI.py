@@ -257,6 +257,7 @@ class PatientFrame(ctk.CTkFrame):
             if w != self.header:
                 w.destroy()
         if len(results) == 0:
+            self.results_title.configure(text="Search Results (0 found)")
             no_results_label = ctk.CTkLabel(self.results_frame,text="No patients found",text_color="red")
             no_results_label.pack(pady=10)
             return
@@ -508,6 +509,9 @@ class BookAppointmentFrame(ctk.CTkFrame):
     def loadPatient(self, patientID):
         self.selected_slot = None
         self.selected_slot_label.configure(text="Selected Slot: None")
+        self.feedback_label.configure(text="")
+        for widget in self.results_frame.winfo_children():
+            widget.destroy()
         self.loadStaffMembers()
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
@@ -520,7 +524,10 @@ class BookAppointmentFrame(ctk.CTkFrame):
     def checkDay(self):
         from datetime import datetime, timedelta
         from functools import partial
-
+        self.selected_slot = None
+        self.selected_slot_label.configure(text="Selected Slot: None")
+        for w in self.results_frame.winfo_children():
+            w.destroy()
         all_slots = [
             "09:00","09:15","09:30","09:45",
             "10:00","10:15","10:30","10:45",
@@ -531,9 +538,6 @@ class BookAppointmentFrame(ctk.CTkFrame):
             "15:00","15:15","15:30","15:45",
             "16:00","16:15","16:30","16:45"
         ]
-        #clear prev results
-        for w in self.results_frame.winfo_children():
-            w.destroy()
         date = self.date_entry.get().strip()
         result = appointments.validateAppointmentDate(date)
         if result == "WRONG FORMAT":
@@ -593,6 +597,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
         duration = int(self.duration_menu.get())
         result = appointments.createAppointment(self.patientID,staffID,date,self.selected_slot,duration,self.app.current_user)
         if result == "SUCCESS":
+            self.checkDay()
             self.feedback_label.configure(text="Appointment Booked Successfully",text_color="green",font=ctk.CTkFont(size=18, weight="bold"))
         elif result == "END OF DAY":
             self.feedback_label.configure(text="Appointment could not be booked, must be during opening hours (09:00-17:00)", text_color="red",font=ctk.CTkFont(size=18, weight="bold"))
@@ -1189,15 +1194,18 @@ class RecallFrame(ctk.CTkFrame):
         ctk.CTkLabel(row,text=suggestedDate,width=140).pack(side="left", padx=5)
         priority_menu = ctk.CTkOptionMenu(row,values=["1", "2", "3", "4", "5"])
         priority_menu.set(str(priority))
-        ctk.CTkButton(row,text="Book",command=partial(self.bookRecall,patientID,suggestedDate)).pack(side="right", padx=5)
+        ctk.CTkButton(row,text="Book",command=partial(self.bookRecall,patientID)).pack(side="right", padx=5)
         ctk.CTkButton(row,text="Complete",command=partial(self.completeRecall,recallID)).pack(side="right", padx=5)
         priority_menu.pack(side="left", padx=5)
         ctk.CTkButton(row,text="Save",width=60,command=partial(self.savePriority,recallID,priority_menu )).pack(side="right", padx=5)
 
-    def bookRecall(self, patientID, suggestedDate):
+    def bookRecall(self, patientID):
+        from datetime import timedelta
+        tomorrow = (datetime.today() + timedelta(days=1)).strftime("%d/%m/%Y")
         self.app.new_appointment_frame.loadPatient(patientID)
-        self.app.new_appointment_frame.date_entry.delete( 0, "end")
-        self.app.new_appointment_frame.date_entry.insert(0,suggestedDate)
+        self.app.new_appointment_frame.date_entry.delete(0,"end")
+
+        self.app.new_appointment_frame.date_entry.insert(0,tomorrow)
         self.app.show_frame(self.app.new_appointment_frame)
 
     def completeRecall(self, recallID):
