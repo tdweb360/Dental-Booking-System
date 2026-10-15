@@ -666,6 +666,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
 class ManageAppointmentFrame(PagedFrame):
     def __init__(self, app):
         super().__init__(app)
+
         self.app = app
 
         self.current_page = 1
@@ -724,45 +725,23 @@ class ManageAppointmentFrame(PagedFrame):
         self.current_page = 1
         self.displayResults()
 
-    def displayResults(self):
-        for w in self.results_frame.winfo_children():
-            w.destroy()
+    def createRow(self, appointment):
+        row = ctk.CTkFrame(self.results_frame)
+        row.pack(fill="x", pady=2)
+        ctk.CTkLabel(row, text=appointment[0], width=60).pack(side="left", padx=5)
+        formattedDate = datetime.strptime(appointment[1], "%Y-%m-%d").strftime("%d/%m/%Y")
+        ctk.CTkLabel(row, text=formattedDate, width=120).pack(side="left", padx=5)
+        ctk.CTkLabel(row, text=appointment[2], width=100).pack(side="left", padx=5)
+        ctk.CTkLabel(row, text=appointment[3], width=180).pack(side="left", padx=5)
+        ctk.CTkLabel(row, text=appointment[4], width=180).pack(side="left", padx=5)
+        ctk.CTkLabel(row, text=f"{appointment[5]} mins", width=100).pack(side="left", padx=5)
+        self.emptyMessage = "No active recalls"
 
-        if len(self.results) == 0:
-            ctk.CTkLabel(self.results_frame, text="No appointments found", text_color="red").pack(pady=20)
-            self.page_label.configure(text="Page 1 of 1")
-            return
-
-        start = (self.current_page - 1) * self.records_per_page
-        end = start + self.records_per_page
-        for appointment in self.results[start:end]:
-            row = ctk.CTkFrame(self.results_frame)
-            row.pack(fill="x", pady=2)
-            ctk.CTkLabel(row, text=appointment[0], width=60).pack(side="left", padx=5)
-            formattedDate = datetime.strptime(appointment[1], "%Y-%m-%d").strftime("%d/%m/%Y")
-            ctk.CTkLabel(row, text=formattedDate, width=120).pack(side="left", padx=5)
-            ctk.CTkLabel(row, text=appointment[2], width=100).pack(side="left", padx=5)
-            ctk.CTkLabel(row, text=appointment[3], width=180).pack(side="left", padx=5)
-            ctk.CTkLabel(row, text=appointment[4], width=180).pack(side="left", padx=5)
-            ctk.CTkLabel(row, text=f"{appointment[5]} mins", width=100).pack(side="left", padx=5)
-            ctk.CTkButton(row, text="Open", width=80, command=partial(self.openAppointment, appointment[0])).pack(side="left", padx=5)
-        totalPages = max(1, (len(self.results) + self.records_per_page - 1) // self.records_per_page)
-        self.page_label.configure(text=f"Page {self.current_page} of {totalPages}")
 
     def openAppointment(self, appointmentID):
         self.app.appointmentDetails_frame.loadAppointment(appointmentID)
         self.app.show_frame(self.app.appointmentDetails_frame)
 
-    def nextPage(self):
-        if self.current_page * self.records_per_page < len(self.results):
-            self.current_page += 1
-            self.displayResults()
-
-    def previousPage(self):
-
-        if self.current_page > 1:
-            self.current_page -= 1
-            self.displayResults()
 
     def searchAppointments(self):
         patient = self.patient_entry.get().strip()
@@ -1157,7 +1136,7 @@ class StaffDetailsFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.staff_frame)
 
-class RecallFrame(ctk.CTkFrame):
+class RecallFrame(PagedFrame):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
@@ -1207,10 +1186,6 @@ class RecallFrame(ctk.CTkFrame):
             ctk.CTkLabel(self.results_frame,text="No active recalls").pack(pady=20)
             return
 
-        start = (self.current_page - 1) * self.records_per_page
-        end = start + self.records_per_page
-        for record in self.results[start:end]:
-            self.createRecallRow(record)
 
     def nextPage(self):
         if self.current_page * self.records_per_page < len(self.results):
@@ -1222,7 +1197,7 @@ class RecallFrame(ctk.CTkFrame):
             self.current_page -= 1
             self.displayResults()
 
-    def createRecallRow(self, recallData):
+    def createRow(self, recallData):
 
         from functools import partial
 
