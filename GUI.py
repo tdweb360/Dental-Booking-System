@@ -663,7 +663,7 @@ class BookAppointmentFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.dashboardFrame)
 
-class ManageAppointmentFrame(ctk.CTkFrame):
+class ManageAppointmentFrame(PagedFrame):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
@@ -725,7 +725,6 @@ class ManageAppointmentFrame(ctk.CTkFrame):
         self.displayResults()
 
     def displayResults(self):
-        from functools import partial
         for w in self.results_frame.winfo_children():
             w.destroy()
 
@@ -1269,7 +1268,7 @@ class RecallFrame(ctk.CTkFrame):
     def back(self):
         self.app.show_frame(self.app.dashboardFrame)
 
-class AuditLogFrame(ctk.CTkFrame):
+class AuditLogFrame(PagedFrame):
 
     def __init__(self, app):
         super().__init__(app)
@@ -1289,19 +1288,10 @@ class AuditLogFrame(ctk.CTkFrame):
         self.bottom_frame = ctk.CTkFrame(self,fg_color="transparent")
         self.bottom_frame.pack(side="bottom",fill="x",pady=(0, 20))
 
-        self.back_button = ctk.CTkButton(self.bottom_frame, text="Back",command=self.back)
-        self.back_button.pack()
-        self.navigation_frame = ctk.CTkFrame(self)
-        self.navigation_frame.pack(side="bottom",pady=10)
-        ctk.CTkButton(self.navigation_frame,text="Previous",command=self.previousPage).pack(side="left", padx=10)
-        self.page_label = ctk.CTkLabel(self.navigation_frame,text="Page 1")
-        self.page_label.pack(side="left", padx=10)
-        ctk.CTkButton(self.navigation_frame,text="Next",command=self.nextPage).pack(side="left", padx=10)
+        self.buildNavigation()
+
         self.results_frame = ctk.CTkScrollableFrame(self,width=1000,height=500)
         self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
-
-
-
 
 
     def loadLogs(self):
@@ -1309,36 +1299,15 @@ class AuditLogFrame(ctk.CTkFrame):
         self.current_page = 1
         self.displayResults()
 
-    def displayResults(self):
-        for w in self.results_frame.winfo_children():
-            w.destroy()
-        if len(self.results) == 0:
-            ctk.CTkLabel(self.results_frame,text="No audit records found",text_color="red").pack(pady=20)
-            self.page_label.configure(text="Page 1 of 1")
-            return
-        start = ( self.current_page - 1) * self.records_per_page
 
-        end = start + self.records_per_page
-        for log in self.results[start:end]:
-            row = ctk.CTkFrame(self.results_frame)
-            row.pack(fill="x", pady=2)
-            ctk.CTkLabel(row,text=log[1],width=140).pack(side="left")
-            ctk.CTkLabel(row,text=log[2],width=150).pack(side="left")
-            ctk.CTkLabel( row,text=log[3],width=300).pack(side="left")
-            ctk.CTkLabel(row,text=log[4],width=180).pack(side="left")
+    def createRow(self,log):
+        row = ctk.CTkFrame(self.results_frame)
+        row.pack(fill="x", pady=2)
+        ctk.CTkLabel(row,text=log[1],width=140).pack(side="left")
+        ctk.CTkLabel(row,text=log[2],width=150).pack(side="left")
+        ctk.CTkLabel( row,text=log[3],width=300).pack(side="left")
+        ctk.CTkLabel(row,text=log[4],width=180).pack(side="left")
 
-        totalPages = max( 1,( len(self.results) + self.records_per_page - 1)// self.records_per_page)
-        self.page_label.configure(text=f"Page {self.current_page} of {totalPages}")
-
-    def nextPage(self):
-        if (self.current_page * self.records_per_page < len(self.results)):
-            self.current_page += 1
-            self.displayResults()
-
-    def previousPage(self):
-        if self.current_page > 1:
-            self.current_page -= 1
-            self.displayResults()
     def back(self):
         self.app.show_frame(self.app.dashboardFrame)
 app = App()
