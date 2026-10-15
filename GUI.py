@@ -8,7 +8,7 @@ import authentication
 import Logging
 import patients
 import Recalls
-import database
+from functools import partial
 from datetime import datetime
 
 class PagedFrame(ctk.CTkFrame):
@@ -18,7 +18,7 @@ class PagedFrame(ctk.CTkFrame):
         super().__init__(app)
         self.app = app
         self.current_page = 1
-        self.records_per_page = 10
+        self.records_per_page = 20
         self.results = []
         self.results_frame = None
         self.page_label = None
@@ -318,7 +318,6 @@ class PatientFrame(ctk.CTkFrame):
         self.feedback_label.configure(text="Patient deleted successfully",text_color="green",font=ctk.CTkFont(size=20, weight="bold"))
 
     def create_patient_row(self, patient):
-        from functools import partial
         row = ctk.CTkFrame(self.results_frame)
         row.pack(fill="x", pady=2)
         widths = [60, 120, 120, 120, 120]
@@ -571,7 +570,6 @@ class BookAppointmentFrame(ctk.CTkFrame):
 
     def checkDay(self):
         from datetime import datetime, timedelta
-        from functools import partial
         self.selected_slot = None
         self.selected_slot_label.configure(text="Selected Slot: None")
         for w in self.results_frame.winfo_children():
@@ -664,14 +662,9 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.app.show_frame(self.app.dashboardFrame)
 
 class ManageAppointmentFrame(PagedFrame):
+    empty_message = "No appointments found"
     def __init__(self, app):
         super().__init__(app)
-
-        self.app = app
-
-        self.current_page = 1
-        self.records_per_page = 10
-        self.results = []
 
         ctk.CTkLabel(self, text="Appointment Management", font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
 
@@ -705,13 +698,7 @@ class ManageAppointmentFrame(PagedFrame):
         self.bottom_frame.pack(side="bottom", fill="x", pady=(0, 20))
         self.back_button = ctk.CTkButton(self.bottom_frame, text="Back", command=self.back)
         self.back_button.pack()
-
-        self.navigation_frame = ctk.CTkFrame(self)
-        self.navigation_frame.pack(side="bottom", pady=10)
-        ctk.CTkButton(self.navigation_frame, text="Previous", command=self.previousPage).pack(side="left", padx=10)
-        self.page_label = ctk.CTkLabel(self.navigation_frame, text="Page 1")
-        self.page_label.pack(side="left", padx=10)
-        ctk.CTkButton(self.navigation_frame, text="Next", command=self.nextPage).pack(side="left", padx=10)
+        self.buildNavigation()
 
         self.results_frame = ctk.CTkScrollableFrame(self, width=1000, height=500)
         self.results_frame.pack(fill="both", expand=True, padx=20, pady=10)
@@ -728,6 +715,7 @@ class ManageAppointmentFrame(PagedFrame):
     def createRow(self, appointment):
         row = ctk.CTkFrame(self.results_frame)
         row.pack(fill="x", pady=2)
+        ctk.CTkButton(row, text="Open", width=80,command=partial(self.openAppointment, appointment[0])).pack(side="left", padx=5)
         ctk.CTkLabel(row, text=appointment[0], width=60).pack(side="left", padx=5)
         formattedDate = datetime.strptime(appointment[1], "%Y-%m-%d").strftime("%d/%m/%Y")
         ctk.CTkLabel(row, text=formattedDate, width=120).pack(side="left", padx=5)
@@ -735,7 +723,6 @@ class ManageAppointmentFrame(PagedFrame):
         ctk.CTkLabel(row, text=appointment[3], width=180).pack(side="left", padx=5)
         ctk.CTkLabel(row, text=appointment[4], width=180).pack(side="left", padx=5)
         ctk.CTkLabel(row, text=f"{appointment[5]} mins", width=100).pack(side="left", padx=5)
-        self.emptyMessage = "No active recalls"
 
 
     def openAppointment(self, appointmentID):
@@ -983,7 +970,6 @@ class StaffManagementFrame(ctk.CTkFrame):
             ctk.CTkLabel(self.results_frame,text="No staff members found",text_color="red").pack(pady=10)
             return
 
-        from functools import partial
 
         for member in results:
             row = ctk.CTkFrame(self.results_frame)
@@ -1139,22 +1125,12 @@ class StaffDetailsFrame(ctk.CTkFrame):
 class RecallFrame(PagedFrame):
     def __init__(self, app):
         super().__init__(app)
-        self.app = app
-        self.current_page = 1
-        self.records_per_page = 10
-        self.results = []
 
         ctk.CTkLabel(self,text="Recall Management",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
 
         self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
         self.back_button.pack(side="bottom",pady=20)
-
-        self.navigation_frame = ctk.CTkFrame(self)
-        self.navigation_frame.pack(side="bottom",pady=10)
-        ctk.CTkButton(self.navigation_frame,text="Previous",command=self.previousPage).pack(side="left",padx=10)
-        self.page_label = ctk.CTkLabel(self.navigation_frame,text="Page 1")
-        self.page_label.pack(side="left",padx=10)
-        ctk.CTkButton(self.navigation_frame,text="Next",command=self.nextPage).pack(side="left",padx=10)
+        self.buildNavigation()
 
         self.header = ctk.CTkFrame(self)
         self.header.pack(fill="x",padx=20)
@@ -1170,36 +1146,12 @@ class RecallFrame(PagedFrame):
         self.results = Recalls.getActiveRecalls()
         if not keepPage:
             self.current_page = 1
-        totalPages = max(1, (len(self.results) + self.records_per_page - 1) // self.records_per_page)
+        totalPages =self.getTotalPages()
         if self.current_page > totalPages:
             self.current_page = totalPages
         self.displayResults()
 
-    def displayResults(self):
-        for widget in self.results_frame.winfo_children():
-            widget.destroy()
-
-        totalPages = max(1, (len(self.results) + self.records_per_page - 1) // self.records_per_page)
-        self.page_label.configure(text=f"Page {self.current_page} of {totalPages}")
-
-        if len(self.results) == 0:
-            ctk.CTkLabel(self.results_frame,text="No active recalls").pack(pady=20)
-            return
-
-
-    def nextPage(self):
-        if self.current_page * self.records_per_page < len(self.results):
-            self.current_page += 1
-            self.displayResults()
-
-    def previousPage(self):
-        if self.current_page > 1:
-            self.current_page -= 1
-            self.displayResults()
-
     def createRow(self, recallData):
-
-        from functools import partial
 
         recallID = recallData[0]
         patientID = recallData[1]
@@ -1244,13 +1196,9 @@ class RecallFrame(PagedFrame):
         self.app.show_frame(self.app.dashboardFrame)
 
 class AuditLogFrame(PagedFrame):
-
+    empty_message = "No audit records found"
     def __init__(self, app):
         super().__init__(app)
-        self.app = app
-        self.current_page = 1
-        self.records_per_page = 10
-        self.results = []
 
         ctk.CTkLabel(self,text="Audit Log",font=ctk.CTkFont(size=30, weight="bold")).pack(pady=20)
         self.header = ctk.CTkFrame(self)
@@ -1267,6 +1215,7 @@ class AuditLogFrame(PagedFrame):
 
         self.results_frame = ctk.CTkScrollableFrame(self,width=1000,height=500)
         self.results_frame.pack(fill="both",expand=True,padx=20,pady=10)
+        ctk.CTkButton(self.bottom_frame, text="Back", command=self.back).pack()
 
 
     def loadLogs(self):
