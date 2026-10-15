@@ -11,9 +11,52 @@ import Recalls
 import database
 from datetime import datetime
 
+class PagedFrame(ctk.CTkFrame):
+    empty_message = "No records found"
 
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+        self.current_page = 1
+        self.records_per_page = 10
+        self.results = []
+        self.results_frame = None
+        self.page_label = None
 
+    def buildNavigation(self):
+        self.navigation_frame = ctk.CTkFrame(self)
+        self.navigation_frame.pack(side="bottom",pady=10)
+        ctk.CTkButton(self.navigation_frame, text="Previous", command= self.previousPage).pack(side="left",pady=10)
+        self.page_label = ctk.CTkLabel(self.navigation_frame, text="Page 1")
+        self.page_label.pack(side="left",padx=10)
+        ctk.CTkButton(self.navigation_frame, text="Next",command=self.nextPage).pack(side="left", padx=10)
 
+    def getTotalPages(self):
+        return max(1, (len(self.results) + self.records_per_page -1) // self.records_per_page)
+
+    def displayResults(self):
+        for w in self.results_frame.winfo_children():
+            w.destroy()
+        self.page_label.configure(text=f"Page {self.current_page} of {self.getTotalPages()}")
+        if len(self.results) == 0:
+            ctk.CTkLabel(self.results_frame,text=self.empty_message, text_color="#F52727").pack(pady=20)
+            return
+        start = (self.current_page -1) * self.records_per_page
+        end = start + self.records_per_page
+        for r in self.results[start:end]:
+            self.createRow(r)
+
+    def createRow(self,record):
+        raise NotImplementedError("Subclasses must overriide create row")
+
+    def nextPage(self):
+        if self.current_page < self.getTotalPages():
+            self.current_page +=1
+            self.displayResults()
+    def previousPage(self):
+        if self.current_page> 1:
+            self.current_page = self.current_page -1
+            self.displayResults()
 
 class App(ctk.CTk):
 
