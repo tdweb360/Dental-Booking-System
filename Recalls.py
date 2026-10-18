@@ -38,6 +38,7 @@ def generateRecalls():
         """, (patientID, today))
         result = cursor.fetchone()
         if result[0] == 0:
+            # roughly 6 months
             suggestedDate = (datetime.strptime(appointmentDate,"%Y-%m-%d") + timedelta(days=183)).strftime("%Y-%m-%d")
             cursor.execute("""
             INSERT INTO Recall_Table

@@ -46,6 +46,7 @@ class PagedFrame(ctk.CTkFrame):
         for r in self.results[start:end]:
             self.createRow(r)
 
+    #overridden by subclasses
     def createRow(self,record):
         raise NotImplementedError("Subclasses must overriide create row")
 

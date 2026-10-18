@@ -38,5 +38,6 @@ def login(username,password):
                 "LOGIN_FAILED",
                 "Invalid credentials"
             )
+    # none returned so user cant tell
     return None
 

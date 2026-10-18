@@ -11,6 +11,7 @@ cursor = connect.cursor()
 cursor.execute("PRAGMA foreign_keys = ON")
 
 def validateFNandSN(firstname, surname):
+    #alphasbet chars, apostrophes and hyphens
     pattern = r"^[A-Za-z'-]+$"
     if len(firstname) == 0 or len(surname) == 0:
         return False
@@ -34,6 +35,7 @@ def validateDOB(dob):
 
 def validatePhoneNUM(phone):
     phone = phone.replace(" ", "")
+    #start 07 follow by 9 char or +44 followed by 10
     pattern = r"^(07\d{9}|\+44\d{10})$"
     if re.match(pattern, phone):
         return True

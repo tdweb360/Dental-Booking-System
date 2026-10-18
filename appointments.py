@@ -9,6 +9,18 @@ connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
 cursor.execute("PRAGMA foreign_keys = ON")
 
+class Appointment:
+    def __init__(self, date, time, duration, patientID, staffID, appointmentID=None):
+        self.appointmentID = appointmentID
+        self.patientID, self.staffID, self.duration = patientID, staffID, duration
+        self.start = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+
+    def getEnd(self):
+        return self.start + timedelta(minutes=self.duration)
+
+    def overlaps(self, other):
+        return self.start < other.getEnd() and self.getEnd() > other.start
+
 
 def createAppointment(patientID,staffID,date,time,duration,current_user):
     resultDATE = validateAppointmentDate(date)
@@ -39,60 +51,26 @@ def createAppointment(patientID,staffID,date,time,duration,current_user):
 
 
 
-
+# class to contain appointment logic for patient + staff
 def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID=None):
-
-    bookingStart = datetime.strptime(time, "%H:%M")
-    bookingEnd = bookingStart + timedelta(minutes=duration)
-
-
     if excludeAppointmentID is None:
-        cursor.execute("""
-        SELECT Appointment_time, Duration
-        FROM Appointments_Table
-        WHERE Appointment_date = ?
-        AND StaffID = ?
-        """, (date, staffID))
-    else:
-        cursor.execute("""
-        SELECT Appointment_time, Duration
-        FROM Appointments_Table
-        WHERE Appointment_date = ?
-        AND StaffID = ?
-        AND AppointmentID != ?
-        """, (date, staffID, excludeAppointmentID))
-    staffAppointments = cursor.fetchall()
-    for each in staffAppointments:
-        existingStart = datetime.strptime(each[0], "%H:%M")
-        existingEnd = existingStart + timedelta(minutes=each[1])
+        #stop conflict with itself
+        excludeAppointmentID = -1
+    newAppt = Appointment(date, time, duration, patientID, staffID)
+    cursor.execute("""
+    SELECT AppointmentID, Appointment_date, Appointment_time, PatientID, StaffID, Duration
+    FROM Appointments_Table
+    WHERE Appointment_date = ?
+    AND (StaffID = ? OR PatientID = ?)
+    AND AppointmentID != ?
+    """, (date, staffID, patientID, excludeAppointmentID))
 
-        if bookingStart < existingEnd and bookingEnd > existingStart:
-            return "STAFF CONFLICT"
-
-    if excludeAppointmentID is None:
-        cursor.execute("""
-        SELECT Appointment_time, Duration
-        FROM Appointments_Table
-        WHERE Appointment_date = ?
-        AND PatientID = ?
-        """, (date, patientID))
-    else:
-        cursor.execute("""
-        SELECT Appointment_time, Duration
-        FROM Appointments_Table
-        WHERE Appointment_date = ?
-        AND PatientID = ?
-        AND AppointmentID != ?
-        """, (date, patientID, excludeAppointmentID))
-
-    patientAppointments = cursor.fetchall()
-    for each in patientAppointments:
-        existingStart = datetime.strptime(each[0], "%H:%M")
-        existingEnd = existingStart + timedelta(minutes=each[1])
-
-        if bookingStart < existingEnd and bookingEnd > existingStart:
+    for row in cursor.fetchall():
+        existing = Appointment(row[1], row[2], row[5], row[3], row[4], row[0])
+        if newAppt.overlaps(existing):
+            if existing.staffID == staffID:
+                return "STAFF CONFLICT"
             return "PATIENT CONFLICT"
-
     return False
 
 
