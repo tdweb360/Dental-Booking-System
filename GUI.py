@@ -808,7 +808,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         staffID = self.staff_lookup[selectedStaff]
         result = appointments.editAppointment(self.appointmentID,date,time,duration,self.patientID,staffID,self.app.current_user)
 
-        if result == "SUCCESSFUL":
+        if result == "SUCCESS":
             self.feedback_label.configure(text="Appointment updated successfully",text_color="green")
             self.app.manageAppointment_Frame.loadAllAppointments()
 

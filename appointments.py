@@ -11,15 +11,22 @@ cursor.execute("PRAGMA foreign_keys = ON")
 
 class Appointment:
     def __init__(self, date, time, duration, patientID, staffID, appointmentID=None):
-        self.appointmentID = appointmentID
-        self.patientID, self.staffID, self.duration = patientID, staffID, duration
-        self.start = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+        self.__appointmentID = appointmentID
+        self.__patientID = patientID
+        self.__staffID = staffID
+        self.__duration = duration
+        self.__start = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
+
+    def getStart(self):
+        return self.__start
 
     def getEnd(self):
-        return self.start + timedelta(minutes=self.duration)
+        return self.__start + timedelta(minutes=self.__duration)
 
+    def getStaffID(self):
+        return self.__staffID
     def overlaps(self, other):
-        return self.start < other.getEnd() and self.getEnd() > other.start
+        return self.getStart() < other.getEnd() and self.getEnd() > other.getStart()
 
 
 def createAppointment(patientID,staffID,date,time,duration,current_user):
@@ -68,7 +75,7 @@ def checkConflict(date, time, duration, staffID, patientID, excludeAppointmentID
     for row in cursor.fetchall():
         existing = Appointment(row[1], row[2], row[5], row[3], row[4], row[0])
         if newAppt.overlaps(existing):
-            if existing.staffID == staffID:
+            if existing.getStaffID() == staffID:
                 return "STAFF CONFLICT"
             return "PATIENT CONFLICT"
     return False
@@ -114,7 +121,7 @@ def editAppointmentSQL(appointmentID,date,time,duration,patientID, staffID, curr
             current_user,
             "EDIT_APPOINTMENT",
             f"AppointmentID {appointmentID}, StaffID {staffID}")
-        return "SUCCESSFUL"
+        return "SUCCESS"
     except sqlite3.Error:
         return "UNSUCCESSFUL"
 
