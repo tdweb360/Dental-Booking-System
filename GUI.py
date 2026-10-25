@@ -382,13 +382,13 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
         self.firstname_entry.delete(0, "end")
-        self.firstname_entry.insert(0, patient.getFirstName())
+        self.firstname_entry.insert(0, patient.getFN())
         self.surname_entry.delete(0, "end")
-        self.surname_entry.insert(0, patient.getSurname())
+        self.surname_entry.insert(0, patient.getSN())
         self.dob_entry.delete(0, "end")
         self.dob_entry.insert(0, datetime.strptime(patient.getDOB(), "%Y-%m-%d").strftime("%d/%m/%Y"))
         self.phone_entry.delete(0, "end")
-        self.phone_entry.insert(0, patient.getPhone())
+        self.phone_entry.insert(0, patient.getPhoNum())
 
     def saveChanges(self):
         firstname = self.firstname_entry.get().strip()
@@ -787,7 +787,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.patientID = appointment[3]
         self.staffID = appointment[4]
         member = staff.getStaffByID(self.staffID)
-        self.staff_menu.set(f"{member.getFullName()} (ID {member.getStaffID()})")
+        self.staff_menu.set(f"{member.getFull()} (ID {member.getStaffID()})")
         formattedDate = datetime.strptime(appointment[1],"%Y-%m-%d").strftime("%d/%m/%Y")
         self.date_entry.delete(0, "end")
         self.date_entry.insert(0, formattedDate)
@@ -971,7 +971,7 @@ class StaffManagementFrame(ctk.CTkFrame):
         for member in results:
             row = ctk.CTkFrame(self.results_frame)
             row.pack(fill="x",pady=2)
-            ctk.CTkLabel(row,text=member.getFullName(),width=180).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member.getFull(),width=180).pack(side="left",padx=10)
             ctk.CTkLabel(row,text=member.getUsername(),width=150).pack(side="left",padx=10)
             ctk.CTkLabel(row,text=member.getRole(),width=120).pack(side="left",padx=10)
             ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member.getStaffID())).pack(side="right",padx=10)
@@ -1021,9 +1021,9 @@ class StaffDetailsFrame(ctk.CTkFrame):
         member = staff.getStaffByID(staffID)
         self.title_label.configure(text=f"Staff Details: {member.describe()}")
         self.firstname_entry.delete(0, "end")
-        self.firstname_entry.insert(0, member.getFirstName())
+        self.firstname_entry.insert(0, member.getFN())
         self.surname_entry.delete(0, "end")
-        self.surname_entry.insert(0, member.getSurname())
+        self.surname_entry.insert(0, member.getSN())
         self.username_entry.delete(0, "end")
         self.username_entry.insert(0, member.getUsername())
         self.role_menu.set(member.getRole())

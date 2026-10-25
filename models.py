@@ -1,4 +1,3 @@
-from symtable import Class
 
 
 class Person():
@@ -58,4 +57,4 @@ class StaffMember(Person):
         else:
             return False
     def describe(self):
-        return f"{self.getFullName()} ({self.__role})"
+        return f"{self.getFull()} ({self.__role})"
