@@ -7,6 +7,7 @@ import sqlite3
 import re
 import bcrypt
 import Logging
+import models
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -53,24 +54,13 @@ def validUsernameFormat(username):
     ) is not None
 
 def createUsername(username):
-    pattern = r"^[A-Za-z0-9._]+$"
-    if not(4 <= len(username) <= 20):
+    if not validUsernameFormat(username):
         return False
-    elif not(re.match(pattern,username)):
-        return False
-    else:
-        cursor.execute("""
-            SELECT Username
-            FROM Staff_Table
-            WHERE Username = ?
-            """, (username,))
-
-        result = cursor.fetchone()
-
-        if result:
-            return False
-        else:
-            return username
+    cursor.execute("""SELECT Username
+                   FROM Staff_Table 
+                   WHERE Username = ?
+                   """, (username,))
+    return cursor.fetchone() is None
 
 def createPass(password, pass2):
     if len(password) < 8:
@@ -242,22 +232,24 @@ def getAllStaff():
 
 
 
-
 def getStaffByID(staffID):
     cursor.execute("""
-    SELECT *
+    SELECT StaffID, FirstName, Surname, Username, Staff_Role
     FROM Staff_Table
     WHERE StaffID = ?
     """,(staffID,))
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return models.StaffMember.fromRow(row)
 
 
 def searchStaffName(name):
     searchPattern = f"%{name}%"
     cursor.execute("""
-    SELECT *
+    SELECT StaffID, FirstName, Surname, Username, Staff_Role
     FROM Staff_Table
     WHERE FirstName LIKE ?
     OR Surname LIKE ?
     """,(searchPattern, searchPattern))
-    return cursor.fetchall()
+    return [models.StaffMember.fromRow(row) for row in cursor.fetchall()]

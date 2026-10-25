@@ -5,6 +5,7 @@ import sqlite3
 from datetime import datetime
 import re
 import Logging
+import models
 
 connect = sqlite3.connect('database.db')
 cursor = connect.cursor()
@@ -91,7 +92,10 @@ def get_patient_by_id(patient_id):
         FROM Patients_Table
         WHERE PatientID = ?
     """, (patient_id,))
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    return models.Patient.fromRow(row)
 
 
 def deletePatient(patientID, current_user):

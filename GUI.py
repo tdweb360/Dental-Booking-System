@@ -9,7 +9,7 @@ import Logging
 import patients
 import Recalls
 from functools import partial
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class PagedFrame(ctk.CTkFrame):
     empty_message = "No records found"
@@ -242,7 +242,6 @@ class PatientFrame(ctk.CTkFrame):
         self.title_label = ctk.CTkLabel(self,text="Patient Management",font=ctk.CTkFont(size=35, weight="bold"))
 
         self.feedback_label = ctk.CTkLabel(self, text="")
-        self.back_button = ctk.CTkButton(self,text="Back",command=self.back)
         self.search_button = ctk.CTkButton(self.search_frame,text="Search",command=self.search_patient)
 
         self.name_label = ctk.CTkLabel(self.search_frame,text="Search By Name")
@@ -380,18 +379,16 @@ class PatientDetailsFrame(ctk.CTkFrame):
         self.back_button.pack(pady=20)
 
     def load_patient(self, patientID):
-        from datetime import datetime
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
         self.firstname_entry.delete(0, "end")
-        self.firstname_entry.insert(0, patient[1])
+        self.firstname_entry.insert(0, patient.getFirstName())
         self.surname_entry.delete(0, "end")
-        self.surname_entry.insert(0, patient[2])
+        self.surname_entry.insert(0, patient.getSurname())
         self.dob_entry.delete(0, "end")
-        dob = datetime.strptime(patient[3],"%Y-%m-%d").strftime("%d/%m/%Y")
-        self.dob_entry.insert(0, dob)
+        self.dob_entry.insert(0, datetime.strptime(patient.getDOB(), "%Y-%m-%d").strftime("%d/%m/%Y"))
         self.phone_entry.delete(0, "end")
-        self.phone_entry.insert(0, patient[4])
+        self.phone_entry.insert(0, patient.getPhone())
 
     def saveChanges(self):
         firstname = self.firstname_entry.get().strip()
@@ -563,14 +560,13 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.loadStaffMembers()
         self.patientID = patientID
         patient = patients.get_patient_by_id(patientID)
-        self.patient_label.configure(text=f"{patient[1]} {patient[2]}")
+        self.patient_label.configure(text=patient.describe())
 
     def chooseSlot(self, slot):
         self.selected_slot = slot
         self.selected_slot_label.configure(text=f"Selected Slot: {slot}")
 
     def checkDay(self):
-        from datetime import datetime, timedelta
         self.selected_slot = None
         self.selected_slot_label.configure(text="Selected Slot: None")
         for w in self.results_frame.winfo_children():
@@ -791,7 +787,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.patientID = appointment[3]
         self.staffID = appointment[4]
         member = staff.getStaffByID(self.staffID)
-        self.staff_menu.set(f"{member[1]} {member[2]}")
+        self.staff_menu.set(f"{member.getFullName()} (ID {member.getStaffID()})")
         formattedDate = datetime.strptime(appointment[1],"%Y-%m-%d").strftime("%d/%m/%Y")
         self.date_entry.delete(0, "end")
         self.date_entry.insert(0, formattedDate)
@@ -975,10 +971,10 @@ class StaffManagementFrame(ctk.CTkFrame):
         for member in results:
             row = ctk.CTkFrame(self.results_frame)
             row.pack(fill="x",pady=2)
-            ctk.CTkLabel(row,text=f"{member[1]} {member[2]}",width=180).pack(side="left",padx=10)
-            ctk.CTkLabel(row,text=member[3],width=150).pack(side="left",padx=10)
-            ctk.CTkLabel(row,text=member[5],width=120).pack(side="left",padx=10)
-            ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member[0])).pack(side="right",padx=10)
+            ctk.CTkLabel(row,text=member.getFullName(),width=180).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member.getUsername(),width=150).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member.getRole(),width=120).pack(side="left",padx=10)
+            ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member.getStaffID())).pack(side="right",padx=10)
 
     def openStaff(self, staffID):
         self.app.staffDetails_frame.loadStaff(staffID)
@@ -1023,13 +1019,14 @@ class StaffDetailsFrame(ctk.CTkFrame):
     def loadStaff(self, staffID):
         self.staffID = staffID
         member = staff.getStaffByID(staffID)
+        self.title_label.configure(text=f"Staff Details: {member.describe()}")
         self.firstname_entry.delete(0, "end")
-        self.firstname_entry.insert(0, member[1])
+        self.firstname_entry.insert(0, member.getFirstName())
         self.surname_entry.delete(0, "end")
-        self.surname_entry.insert(0, member[2])
+        self.surname_entry.insert(0, member.getSurname())
         self.username_entry.delete(0, "end")
-        self.username_entry.insert(0, member[3])
-        self.role_menu.set(member[5])
+        self.username_entry.insert(0, member.getUsername())
+        self.role_menu.set(member.getRole())
 
     def saveChanges(self):
         firstname = self.firstname_entry.get().strip()
@@ -1175,7 +1172,6 @@ class RecallFrame(PagedFrame):
         ctk.CTkButton(row,text="Save",width=60,command=partial(self.savePriority,recallID,priority_menu )).pack(side="right", padx=5)
 
     def bookRecall(self, patientID):
-        from datetime import timedelta
         tomorrow = (datetime.today() + timedelta(days=1)).strftime("%d/%m/%Y")
         self.app.new_appointment_frame.loadPatient(patientID)
         self.app.new_appointment_frame.date_entry.delete(0,"end")
