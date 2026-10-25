@@ -344,6 +344,7 @@ class PatientDetailsFrame(ctk.CTkFrame):
         super().__init__(app)
 
         self.app = app
+        self.patientID = None
 
         self.title_label = ctk.CTkLabel(self, text="Patient Details", font= ctk.CTkFont(size=30, weight="bold"))
         self.firstname_label = ctk.CTkLabel(self, text="First Name")
@@ -787,7 +788,7 @@ class AppointmentDetailsFrame(ctk.CTkFrame):
         self.patientID = appointment[3]
         self.staffID = appointment[4]
         member = staff.getStaffByID(self.staffID)
-        self.staff_menu.set(f"{member.getFull()} (ID {member.getStaffID()})")
+        self.staff_menu.set(member.getFull())
         formattedDate = datetime.strptime(appointment[1],"%Y-%m-%d").strftime("%d/%m/%Y")
         self.date_entry.delete(0, "end")
         self.date_entry.insert(0, formattedDate)
@@ -972,8 +973,8 @@ class StaffManagementFrame(ctk.CTkFrame):
             row = ctk.CTkFrame(self.results_frame)
             row.pack(fill="x",pady=2)
             ctk.CTkLabel(row,text=member.getFull(),width=180).pack(side="left",padx=10)
-            ctk.CTkLabel(row,text=member.getUsername(),width=150).pack(side="left",padx=10)
-            ctk.CTkLabel(row,text=member.getRole(),width=120).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member.getusername(),width=150).pack(side="left",padx=10)
+            ctk.CTkLabel(row,text=member.getrole(),width=120).pack(side="left",padx=10)
             ctk.CTkButton(row,text="Open",command=partial(self.openStaff,member.getStaffID())).pack(side="right",padx=10)
 
     def openStaff(self, staffID):
@@ -1025,8 +1026,8 @@ class StaffDetailsFrame(ctk.CTkFrame):
         self.surname_entry.delete(0, "end")
         self.surname_entry.insert(0, member.getSN())
         self.username_entry.delete(0, "end")
-        self.username_entry.insert(0, member.getUsername())
-        self.role_menu.set(member.getRole())
+        self.username_entry.insert(0, member.getusername())
+        self.role_menu.set(member.getrole())
 
     def saveChanges(self):
         firstname = self.firstname_entry.get().strip()

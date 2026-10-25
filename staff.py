@@ -133,7 +133,7 @@ def deleteStaff(staffID, current_user):
     if not checkManager(current_user):
         return "NOT_AUTHORISED"
     member = getStaffByID(staffID)
-    if member[3] == current_user:
+    if member.getusername() == current_user:
         return "OWN_ACCOUNT"
     cursor.execute("""
     SELECT COUNT(*)
