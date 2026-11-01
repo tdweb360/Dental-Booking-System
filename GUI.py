@@ -532,8 +532,11 @@ class BookAppointmentFrame(ctk.CTkFrame):
         self.loadStaffMembers()
 
         self.patient_label.pack()
+        ctk.CTkLabel(self, text="Date (DD/MM/YYYY)").pack()
         self.date_entry.pack(pady=5)
+        ctk.CTkLabel(self, text="Duration (minutes)").pack()
         self.duration_menu.pack(pady=5)
+        ctk.CTkLabel(self, text="Staff member").pack()
         self.staff_menu.pack(pady=5)
         self.search_button.pack(pady=5)
         self.feedback_label.pack()
@@ -597,6 +600,9 @@ class BookAppointmentFrame(ctk.CTkFrame):
             self.feedback_label.configure(text="Select a staff member",text_color="red")
             return
         staffID = self.staff_lookup[selectedStaff]
+        self.checked_date = date
+        self.checked_staffID = staffID
+        self.checked_duration = int(self.duration_menu.get())
         results = appointments.getAppointmentsByDateAndStaff(date,staffID)
         booked_slots = []
         for appointment in results:
@@ -626,19 +632,20 @@ class BookAppointmentFrame(ctk.CTkFrame):
                 button = ctk.CTkButton(self.results_frame,text=f"{slot} AVAILABLE",fg_color="green",command=partial(self.chooseSlot,slot ))
                 button.pack(pady=2)
             else:
-                ctk.CTkLabel(self.results_frame,text=f"{slot} BOOKED",text_color="red").pack(pady=2)
+                if slot in booked_slots:
+                    label = f"{slot} BOOKED"
+                else:
+                    label = f"{slot} NOT ENOUGH TIME"
+                ctk.CTkLabel(self.results_frame,text=label,text_color="red").pack(pady=2)
+
 
     def bookAppointment(self):
         if self.selected_slot == None:
             self.feedback_label.configure(text="Select a slot first",text_color="red")
             return
-        date = self.date_entry.get().strip()
-        selectedStaff = self.staff_menu.get()
-        if selectedStaff == "Select Staff":
-            self.feedback_label.configure(text="Select a staff member",text_color="red")
-            return
-        staffID = self.staff_lookup[selectedStaff]
-        duration = int(self.duration_menu.get())
+        date = self.checked_date
+        staffID = self.checked_staffID
+        duration = self.checked_duration
         result = appointments.createAppointment(self.patientID,staffID,date,self.selected_slot,duration,self.app.current_user)
         if result == "SUCCESS":
             self.checkDay()
@@ -1090,11 +1097,15 @@ class StaffDetailsFrame(ctk.CTkFrame):
     def resetPassword(self):
         self.popup = ctk.CTkToplevel(self)
         self.popup.title("Reset Password")
+        self.popup.geometry("300x200")
+        self.popup.attributes("-topmost", True)
         self.newpassword_entry = ctk.CTkEntry(self.popup,placeholder_text="Password",show="*")
         self.confirm_entry = ctk.CTkEntry(self.popup,placeholder_text="Confirm Password",show="*")
         self.newpassword_entry.pack(pady=5)
         self.confirm_entry.pack(pady=5)
         ctk.CTkButton(self.popup,text="Reset Password",command=self.submit).pack(pady=10)
+        self.popup.after(100, self.popup.focus_force)
+        self.popup.after(100, self.popup.grab_set)
 
     def submit(self):
 

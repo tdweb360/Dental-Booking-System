@@ -197,8 +197,9 @@ def getAppointmentsByDateAndStaff(date,staffID):
 
     return Results
 
-def getAllAppointments():
 
+def getAllAppointments():
+    today = datetime.today().strftime("%Y-%m-%d")
     cursor.execute("""
     SELECT
         A.AppointmentID,
@@ -213,11 +214,13 @@ def getAllAppointments():
         ON A.PatientID = P.PatientID
     INNER JOIN Staff_Table S
         ON A.StaffID = S.StaffID
+    WHERE A.Appointment_date >= ?
     ORDER BY
         A.Appointment_date,
         A.Appointment_time
-    """)
+    """, (today,))
     return cursor.fetchall()
+
 
 def searchAppointments(patient, date):
     if date != "":
@@ -225,6 +228,7 @@ def searchAppointments(patient, date):
             date = datetime.strptime(date, "%d/%m/%Y").strftime("%Y-%m-%d")
         except ValueError:
             return []
+    today = datetime.today().strftime("%Y-%m-%d")
     cursor.execute("""
     SELECT
         A.AppointmentID,
@@ -242,11 +246,11 @@ def searchAppointments(patient, date):
         (P.FirstName LIKE ?
         OR P.Surname LIKE ?)
         AND A.Appointment_date LIKE ?
-
+        AND A.Appointment_date >= ?
     ORDER BY
         A.Appointment_date,
         A.Appointment_time
-    """, (f"%{patient}%",f"%{patient}%",f"%{date}%"))
+    """, (f"%{patient}%", f"%{patient}%", f"%{date}%", today))
     return cursor.fetchall()
 
 def getAppointmentByID(appointmentID):

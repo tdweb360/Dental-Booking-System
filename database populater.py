@@ -1,230 +1,97 @@
-
-# temporary file that fills database for testing
-
-# import sqlite3
-# from datetime import datetime
-# import random
-#
-# connect = sqlite3.connect('database.db')
-# cursor = connect.cursor()
-#
-# firstnames = ["Tom", "Dan", "Alex", "Sam", "Jamie", "Chris", "Taylor"]
-# surnames = ["Smith", "Brown", "Webster", "Jones", "Taylor", "Wilson"]
-#
-# for i in range(20):  # creates 20 patients
-#     firstname = random.choice(firstnames)
-#     surname = random.choice(surnames)
-#
-#     # random date of birth
-#     year = random.randint(1970, 2010)
-#     month = random.randint(1, 12)
-#     day = random.randint(1, 28)  # safe so no invalid dates
-#
-#     date_of_birth = f"{year:04d}-{month:02d}-{day:02d}"
-#
-#     # random UK-style phone number
-#     phone = "07" + "".join(str(random.randint(0,9)) for _ in range(9))
-#
-#
-#     cursor.execute("""
-#     INSERT INTO Patients_Table (FirstName, Surname, Date_of_birth, Phone_Num)
-#     VALUES (?, ?, ?, ?)
-#     """, (firstname, surname, date_of_birth, phone))
-#
-# connect.commit()
-# connect.close()
-# #
-# # print("✅ Database populated with test patients")
-# # import sqlite3
-# # import random
-# # #
-# connect = sqlite3.connect('database.db')
-# cursor = connect.cursor()
-#
-# # sample times (15-minute intervals)
-# times = [
-#     "09:00", "09:15", "09:30", "09:45",
-#     "10:00", "10:15", "10:30", "10:45",
-#     "11:00", "11:15", "11:30", "11:45",
-#     "13:00", "13:15", "13:30", "13:45",
-#     "14:00", "14:15", "14:30", "14:45",
-#     "15:00", "15:15", "15:30", "15:45",
-#     "16:00", "16:15", "16:30"
-# ]
-# #
-# # durations = [15, 30, 45, 60]
-#
-# # example dates
-# dates = [
-#     "2026-09-18",
-#     "2026-09-19",
-#     "2026-09-20"
-# ]
-#
-# for i in range(20):  # creates 20 appointments
-#     date = random.choice(dates)
-#     time = random.choice(times)
-#     duration = random.choice(durations)
-#
-#     patientID = random.randint(1, 10)  # assumes you have patients
-#     staffID = 1
-#
-#     try:
-#         cursor.execute("""
-#         INSERT INTO Appointments_Table
-#         (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
-#         VALUES (?,?,?,?,?)
-#         """, (date, time, patientID, staffID, duration))
-#     except:
-#         pass  # ignore duplicates/conflicts in filler
-#
-# connect.commit()
-# connect.close()
-#
-# print("Appointments table populated")
-#
-# cursor.execute("DELETE FROM Staff_Table")
-# cursor.execute("DELETE FROM sqlite_sequence WHERE name='Staff_Table'")
-# connect.commit()
-#
-# cursor.execute("""
-# DELETE FROM Appointments_Table
-# """)
-#
-# cursor.execute("""
-# DELETE FROM sqlite_sequence
-# WHERE name = 'Appointments_Table'
-# """)
-#
-# connect.commit()
-#
-# print("Appointments deleted and IDs reset")
-#
-# import sqlite3
-#
-# connect = sqlite3.connect("database.db")
-# cursor = connect.cursor()
-#
-# cursor.execute("DELETE FROM Recall_Table")
-#
-# cursor.executemany("""
-# INSERT INTO Recall_Table
-# (PatientID,
-#  AppointmentID,
-#  SuggestedDate,
-#  Priority,
-#  Completed)
-# VALUES (?,?,?,?,?)
-# """, [
-#
-#     (1, 101, "2026-08-01", 1, 0),
-#     (2, 102, "2026-08-15", 2, 0),
-#     (3, 103, "2026-09-01", 3, 0),
-#     (4, 104, "2026-09-15", 4, 0),
-#     (5, 105, "2026-10-01", 5, 0),
-#
-#     # completed recall
-#     (6, 106, "2026-07-01", 1, 1)
-#
-# ])
-#
-# connect.commit()
-#
-# print("Recall test data created")
-#
-# connect.close()
+# wipes patients, appointments and recalls, then fills the database with
+# test data that is always in the FUTURE (relative to the day you run it)
+# staff accounts are NOT deleted, so you can still log in
 
 import sqlite3
 import random
+from datetime import datetime, timedelta
+
+# ---------- settings you can change ----------
+NUM_PATIENTS = 50
+NUM_APPOINTMENTS = 100
+DAYS_AHEAD = 14          # appointments spread over the next 14 weekdays
+# ---------------------------------------------
 
 connect = sqlite3.connect("database.db")
 cursor = connect.cursor()
+cursor.execute("PRAGMA foreign_keys = ON")
 
-# CLEAR DATA
+# 1) get the real staff IDs so appointments only use staff that exist
+cursor.execute("SELECT StaffID FROM Staff_Table")
+staffIDs = [row[0] for row in cursor.fetchall()]
+if len(staffIDs) == 0:
+    print("No staff in the database - run the main program once to create a manager first")
+    connect.close()
+    raise SystemExit
 
+# 2) wipe - ORDER MATTERS: tables that reference others must be emptied first
+cursor.execute("DELETE FROM Recall_Table")
 cursor.execute("DELETE FROM Appointments_Table")
 cursor.execute("DELETE FROM Patients_Table")
+# reset the AUTOINCREMENT counters so IDs start from 1 again
+for table in ["Recall_Table", "Appointments_Table", "Patients_Table"]:
+    cursor.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
+# uncomment the next line if you also want an empty audit log
+cursor.execute("DELETE FROM AuditLog")
 
-# Reset auto increment IDs (SQLite)
+# 3) patients
+firstNames = ["Tom","Sarah","Emma","Jake","Olivia","James","Sophie","Ben",
+              "Lucy","Daniel","Mia","Harry","Grace","Charlie","Amelia"]
+surnames = ["Smith","Jones","Brown","Taylor","Wilson","Johnson","Evans",
+            "Thomas","Roberts","Walker","White","Hall","Davies","Lewis"]
 
-cursor.execute("DELETE FROM sqlite_sequence WHERE name='Appointments_Table'")
-cursor.execute("DELETE FROM sqlite_sequence WHERE name='Patients_Table'")
-
-# PATIENTS
-
-first_names = [
-    "Tom","Sarah","Emma","Jake","Olivia","James","Sophie","Ben",
-    "Lucy","Daniel","Mia","Harry","Grace","Charlie","Amelia"
-]
-
-surnames = [
-    "Smith","Jones","Brown","Taylor","Wilson","Johnson","Evans",
-    "Thomas","Roberts","Walker","White","Hall","Davies","Lewis"
-]
-
-for i in range(50):
-
-    first = random.choice(first_names)
-    surname = random.choice(surnames)
-
-    year = random.randint(1950, 2015)
-    month = random.randint(1, 12)
-    day = random.randint(1, 28)
-
-    dob = f"{year:04d}-{month:02d}-{day:02d}"
-
+for i in range(NUM_PATIENTS):
+    dob = f"{random.randint(1950, 2015):04d}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}"
     phone = "07" + "".join(str(random.randint(0, 9)) for _ in range(9))
-
     cursor.execute("""
-    INSERT INTO Patients_Table
-    (FirstName, Surname, Date_of_birth, Phone_Num)
+    INSERT INTO Patients_Table (FirstName, Surname, Date_of_birth, Phone_Num)
     VALUES (?,?,?,?)
-    """, (first, surname, dob, phone))
+    """, (random.choice(firstNames), random.choice(surnames), dob, phone))
 
-# APPOINTMENTS
+# 4) appointments - list of future weekdays starting from tomorrow
+dates = []
+day = datetime.today() + timedelta(days=1)
+while len(dates) < DAYS_AHEAD:
+    if day.weekday() < 5:                      # 0-4 = Monday-Friday
+        dates.append(day.strftime("%Y-%m-%d"))
+    day += timedelta(days=1)
 
-dates = [
-    "2026-09-18",
-    "2026-09-19",
-    "2026-09-20",
-    "2026-09-21",
-    "2026-09-22"
-]
+# remember what has been booked so we can avoid overlaps
+# key = (person type, ID, date) -> list of (start, end) in minutes since midnight
+booked = {}
 
-times = [
-    "09:00","09:15","09:30","09:45",
-    "10:00","10:15","10:30","10:45",
-    "11:00","11:15","11:30","11:45",
-    "12:00","12:15","12:30","12:45",
-    "13:00","13:15","13:30","13:45",
-    "14:00","14:15","14:30","14:45",
-    "15:00","15:15","15:30","15:45",
-    "16:00","16:15","16:30","16:45"
-]
+def isFree(key, start, end):
+    for (s, e) in booked.get(key, []):
+        if start < e and end > s:              # same overlap test as your Appointment class
+            return False
+    return True
 
-durations = [15, 30, 45, 60]
-
-for i in range(100):
-
+created = 0
+attempts = 0
+while created < NUM_APPOINTMENTS and attempts < NUM_APPOINTMENTS * 20:
+    attempts += 1
     date = random.choice(dates)
-    time = random.choice(times)
-    duration = random.choice(durations)
-
-    patientID = random.randint(1, 50)
-    staffID = random.randint(1, 3)
-
-    try:
-
-        cursor.execute("""
-        INSERT INTO Appointments_Table
-        (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
-        VALUES (?,?,?,?,?)
-        """, (date, time, patientID, staffID, duration))
-
-    except:
-        pass
+    duration = random.choice([15, 30, 45, 60])
+    start = random.choice(range(9 * 60, 17 * 60, 15))   # 09:00 to 16:45
+    end = start + duration
+    if end > 17 * 60:                          # must finish by 17:00
+        continue
+    patientID = random.randint(1, NUM_PATIENTS)
+    staffID = random.choice(staffIDs)
+    staffKey = ("staff", staffID, date)
+    patientKey = ("patient", patientID, date)
+    if not (isFree(staffKey, start, end) and isFree(patientKey, start, end)):
+        continue
+    booked.setdefault(staffKey, []).append((start, end))
+    booked.setdefault(patientKey, []).append((start, end))
+    time = f"{start // 60:02d}:{start % 60:02d}"
+    cursor.execute("""
+    INSERT INTO Appointments_Table
+    (Appointment_date, Appointment_time, PatientID, StaffID, Duration)
+    VALUES (?,?,?,?,?)
+    """, (date, time, patientID, staffID, duration))
+    created += 1
 
 connect.commit()
 connect.close()
-
-print("Patients and appointments populated successfully")
+print(f"Done: {NUM_PATIENTS} patients and {created} future appointments created")
